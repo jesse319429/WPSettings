@@ -5,10 +5,14 @@
  * @version 1.1
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
+ * @license MIT http://en.wikipedia.org/wiki/MIT_License
  */
 
 
 /*************************************
+ 	
+ 	HOW TO
+ 	
 	A simple example:
 	----------------------------------
 	add_action('admin_menu', 'my_admin_menu');
@@ -46,6 +50,8 @@
 	
 	
 	
+	FIELD TYPES
+	
 	These are the types that can be used in addField() (the third parameter)
 	
 	"text"
@@ -59,19 +65,52 @@
 	
 	
 	
-	Todos
+	REQUIREMENTS
+	
+	1) PHP 5
+	2) WordPress 3.x (Tested in 3.2.1 and up, but will most likely work in 3.0 or even 2.7 when the Settings API was added)
+	
+	
+	
+	TODOS
 	
 	1) Add more types :)
 	2) Add html5 style input boxes (as well as some setting to create html or xhtml type inputs)
 		
 		
 	
-	Version history
+	VERSION HISTORY
 	
 	1.0
 		A first simple version to handle just text values.
 	1.1
 		Added types: url, int, checkbox
+	
+	
+	
+	LICENSE - MIT
+	
+	http://en.wikipedia.org/wiki/MIT_License
+	
+	Copyright (C) 2011 by David M&aring;rtensson <david.martensson@gmail.com>
+	
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+	
+	The above copyright notice and this permission notice shall be included in
+	all copies or substantial portions of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+	THE SOFTWARE.
 		
 *************************************/
 
