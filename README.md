@@ -45,14 +45,10 @@ Field types
 
 These are the types that can be used in addField() (the third parameter)
 	
-* "text"
-** A standard text input type. Sanitized with $wpdb->escape()
-* "url"
-** A URL text. Sanitized with esc_url()
-* "int"
-** A integer. Sanitized with (int)
-* "checkbox"
-** A checkbox, sanitizes to save 1 or 0
+* "text" - A standard text input type. Sanitized with $wpdb->escape()
+* "url" - A URL text. Sanitized with esc_url()
+* "int" - A integer. Sanitized with (int)
+* "checkbox" - A checkbox, sanitizes to save 1 or 0
 
 
 Requirements
@@ -72,7 +68,5 @@ Todos
 Version history
 ------------
 	
-* 1.0
-** A first simple version to handle just text values.
-* 1.1
-** Added types: url, int, checkbox
+* 1.0 - A first simple version to handle just text values.
+* 1.1 - Added types: url, int, checkbox
