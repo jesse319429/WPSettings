@@ -1,7 +1,7 @@
 WPSettings
 =============
 
-A set of classes to create a WordPress settings page for a Theme or a plugin. (README.me, this file, and LICENSE.txt doesn't have to be downloaded and distributed. The same information exists inside of wpsettings.php).
+A set of classes to create a WordPress settings page for a Theme or a plugin. (You only need the wpsettings.php file. The readme, license and other files are not required to download and use or distribute).
 
 How to
 ------------
