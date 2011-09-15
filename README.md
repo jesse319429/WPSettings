@@ -7,6 +7,8 @@ How to
 ------------
 
 ### A simple example
+	require_once('/path/to/wpsettings.php');
+
 	add_action('admin_menu', 'my_admin_menu');
 	add_action('admin_init', 'my_admin_init');
 	
@@ -21,13 +23,15 @@ How to
 		$wp_settings_page = new WPSettingsPage('My page title', 'My settings page title', 'My Menu Title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
 	}
 	
-	function admin_init() {
+	function my_admin_init() {
 		global $wp_settings_page;
 		
 		// Adds a config section
 		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
 		// Adds a text input
-		$section->addField('test', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
+		$section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
+		// Adds three checkboxes
+		$section->addField('test_checkboxes', 'Select cake', 'checkbox', array('my_options[cake_1]', 'my_options[cake_2]', 'my_options[cake_3]'), array(false, false, false), array('Cake 1', 'Cake 2', 'Cake 3'));
 		
 		// Activate settings
 		$wp_settings_page->activeteSettings();
