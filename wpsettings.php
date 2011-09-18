@@ -10,6 +10,19 @@
 
 
 /*************************************
+ 
+	FEED ME A STRAY CAT
+ 	
+ 	Flattr me here: 
+ 	http://www.feedmeastraycat.net/projects/wordpress-snippets/wpsettings/
+
+	See more WP Snippets by me here: 
+	http://www.feedmeastraycat.net/projects/wordpress-snippets/
+	
+	I do more WP stuff togheter with OddAlice:
+	http://oddalice.com/
+ 	
+ 	
  	
  	HOW TO
  	

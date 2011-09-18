@@ -3,6 +3,12 @@ WPSettings
 
 A set of classes to create a WordPress settings page for a Theme or a plugin. (You only need the wpsettings.php file. The readme, license and other files are not required to download and use or distribute).
 
+Flattr me here: http://www.feedmeastraycat.net/projects/wordpress-snippets/wpsettings/
+
+See more WP Snippets by me here: http://www.feedmeastraycat.net/projects/wordpress-snippets/
+	
+I do more WP stuff togheter with OddAlice: http://oddalice.com/
+
 How to
 ------------
 
