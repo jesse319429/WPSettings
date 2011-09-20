@@ -19,7 +19,7 @@
 	See more WP Snippets by me here: 
 	http://www.feedmeastraycat.net/projects/wordpress-snippets/
 	
-	I do more WP stuff togheter with OddAlice:
+	I do more WP stuff together with Odd Alice:
 	http://oddalice.com/
  	
  	
