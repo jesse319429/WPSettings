@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.1.1
+ * @version 1.2
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -49,10 +49,28 @@
 		
 		// Adds a config section
 		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
+		
 		// Adds a text input
 		$section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
+		
 		// Adds three checkboxes
 		$section->addField('test_checkboxes', 'Select cake', 'checkbox', array('my_options[cake_1]', 'my_options[cake_2]', 'my_options[cake_3]'), array(false, false, false), array('Cake 1', 'Cake 2', 'Cake 3'));
+		
+		// Adds a dropdown without a option group
+		$dropdown = $section->addField('test_select', 'Select day', 'dropdown', 'my_options[day]', 'mon');
+		$dropdown->addOption('mon', 'Monday');
+		$dropdown->addOption('tues', 'Tuesday');
+		
+		// Adds a dropdown with two groups
+		$dropdown = $section->addField('test_select2', 'Select day again', 'dropdown', 'my_options[day2]', 6);
+		// Uncomment this option to get a groupless option in the beginning
+		//$dropdown->addOption(0, 'Choose a Day');
+		$optgroup = $dropdown->addOptionGroup('Weekday');
+		$dropdown->addOption(1, 'Monday', $optgroup);
+		$dropdown->addOption(2, 'Tuesday', $optgroup);
+		$optgroup = $dropdown->addOptionGroup('Weekend');
+		$dropdown->addOption(6, 'Saturday', $optgroup);
+		$dropdown->addOption(7, 'Sunday', $optgroup);
 		
 		// Activate settings
 		$wp_settings_page->activeteSettings();
@@ -79,6 +97,8 @@
 		A integer. Sanitized with (int)
 	"checkbox"
 		A checkbox, sanitizes to save 1 or 0
+	"dropdown"
+		A select type dropdown. Sanitizes with standard $wpdb->escape()
 	
 	
 	
@@ -98,10 +118,12 @@
 	
 	VERSION HISTORY
 	
-	1.0
-		A first simple version to handle just text values.
+	1.2
+		Added type: selectbox (see how to)
 	1.1
 		Added types: url, int, checkbox
+	1.0
+		A first simple version to handle just text values.
 	
 	
 	
@@ -152,7 +174,14 @@ class WPSettings {
 			return $this->$name;
 		}
 		else {
-			throw new Exception("Undefined method or property ".$name);
+			// isset is false on null parameters, this "fixes" that checking if tha parameter truely doesn't exist
+			$props = get_object_vars($this);
+			if (array_key_exists($name, $props)) {
+				return $this->$name;
+			}
+			else {
+				throw new Exception("Undefined method or property ".$name);
+			}
 		}
 	}
 	
@@ -163,7 +192,7 @@ class WPSettings {
 	 */
 	public function __set($name, $value) {
 		$this->$name = $value;
-	}
+	} 
 
 }
 
@@ -301,6 +330,7 @@ class WPSettingsPage extends WPSettings {
 						case "url":
 							$new_input[$name] = $this->__sanitizeURL($input[$name]);
 						break;
+						case "dropdown":
 						case "text":
 						default:
 							$new_input[$name] = $this->__sanitizeText($input[$name]);
@@ -428,7 +458,14 @@ class WPSettingsSection extends WPSettings {
 	 * @return WPSettingsField
 	 */
 	public function addField($field_id, $headline, $type, $input_name, $current_value='', $help_text='') {
-		$field = new WPSettingsField($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
+		// Create dropdown
+		if ($type == "dropdown") {
+			$field = new WPSettingsFieldDropDown($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
+		}
+		// Create any other type
+		else {
+			$field = new WPSettingsField($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
+		}
 		$this->Fields[] = &$field;
 		return $field;
 	}
@@ -496,6 +533,10 @@ class WPSettingsField extends WPSettingsSection {
 	public function outputField() {
 		switch ($this->Type) {
 			
+			// Drop down
+			case "dropdown":
+				$this->__outputDropDownField();
+			break;
 			// Checbox
 			case "checkbox":
 				$this->__outputCheckboxField();
@@ -555,15 +596,178 @@ class WPSettingsField extends WPSettingsSection {
 			}
 			?>
 			<div style="width: 150px; float: left;">
-				<input type="checkbox" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="1" <?php echo ( $this->CurrentValue[$index] ? 'checked="checked"':'' ) ?> />
+				<input type="checkbox" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> />
 			</div>
 			<div style="clear: both;"></div>
 			<?php
 			
 		}
 	}
+	
+	/**
+	 * Output field - Type "dropdown"
+	 */
+	private function __outputDropDownField() {
+		foreach ($this->InputName AS $index => $input_name) {
+			
+			$width = 300;
+			
+			if ($this->HelpText[$index]) {
+				$width -= 150;
+				?>
+				<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
+				<?php
+			}
+			?>
+			<div style="width: 150px; float: left;">
+				<select name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>">
+					<?php
+					// Loop options through option groups
+					if ($this->OptionGroups) {
+						// First get options with specifically no group (default value most likely)
+						$this->__outputDropDownOptions($index, false);
+						// Then loop through the option groups
+						foreach ($this->OptionGroups AS $optgroup_index => $optgroup) {
+							?>
+							<optgroup label="<?php esc_attr_e( $optgroup->Name )?>">
+								<?php
+								$this->__outputDropDownOptions($index, $optgroup);
+								?>
+							</optgroup>
+							<?php
+						}
+					}
+					// Loop all options without groups
+					else {
+						$this->__outputDropDownOptions($index);
+					} 
+					?>
+				</select>
+			</div>
+			<div style="clear: both;"></div>
+			<?php
+			
+		}
+	}
+	
+	/**
+	 * Output dropdown options. All or for a specific option group. If $optgroup is null, all options will be
+	 * shown. If it's false, only options without group will be shown. If it's set only options of that group
+	 * will be shown.
+	 * @param int $field_index The current fields index
+	 * @param WPSettingsDropDownOptionGroup|null|false $optgroup Optional
+	 */
+	private function __outputDropDownOptions($field_index, $optgroup=null) {
+		foreach ($this->Options AS $option_index => $option) {
+			// Skip if
+			// Trying to get option group only (not null and not false)
+			// And this option isn't part of that option group
+			// Or this option has no option group at all
+			if ( !is_null($optgroup) && $optgroup !== false && ( (!is_null($option->OptionGroup) && $option->OptionGroup->Name !== $optgroup->Name) || (is_null($option->OptionGroup)) ) ) {
+				continue;
+			}
+			// Skip if 
+			// Optgroup is set to false, and this option has a optgroup
+			if ($optgroup === false && !is_null($option->OptionGroup)) {
+				continue;
+			}
+			?>
+			<option value="<? esc_attr_e( $option->Value )?>" id="<?php esc_attr_e( $this->FieldId .'_'.$field_index.'_'.$option_index ) ?>" <?php selected($this->CurrentValue[$field_index], $option->Value) ?>><?php esc_attr_e( $option->Name ) ?></option>
+			<?php
+		}
+	}
 		
 	
 }
+
+
+
+/**
+ * WP Settings Field Drop Down class
+ * @see WPSettingsField
+ */
+class WPSettingsFieldDropDown extends WPSettingsField {
+	
+	public $Options = array();
+	public $OptionGroups = array();
+	
+	/**
+	 * Add an option to the drop down
+	 * @param string|int $value
+	 * @param string $name Optional
+	 * @param WPSettingsDropDownOptionGroup|null $optgroup Optional
+	 * @return WPSettingsDropDownOption
+	 */
+	public function addOption($value, $name='', $optgroup=null) {
+		$name = ($name ? $name:$value);
+		$option = new WPSettingsDropDownOption($value, $name, $optgroup);
+		$this->Options[] = $option;
+		return $option;
+	}
+	
+	/**
+	 * Add an option group
+	 * @param string $name
+	 */
+	public function addOptionGroup($name) {
+		$optgroup = new WPSettingsDropDownOptionGroup($name);
+		$this->OptionGroups[] = $optgroup;
+		return $optgroup;
+	}
+	
+}
+
+
+
+/**
+ * WP Settings Field Drop Down Option class
+ * @see WPSettings
+ */
+class WPSettingsDropDownOption extends WPSettings {
+	
+	protected $Value;
+	protected $Name;
+	protected $OptionGroup = null;
+	
+	/**
+	 * Creates a drop down option
+	 * @param string|int $value
+	 * @param string $name
+	 * @param WPSettingsDropDownOptionGroup|null $optgroup Optional option group
+	 * @return WPSettingsDropDownOption
+	 */
+	function __construct($value, $name, $optgroup=null) {
+		$this->Value = $value;
+		$this->Name = $name;	
+		$this->OptionGroup = $optgroup;
+		return $this;
+	}
+	
+}
+
+
+
+/**
+ * WP Settings Field Drop Down Option Group class
+ * @see WPSettings
+ */
+class WPSettingsDropDownOptionGroup extends WPSettings {
+	
+	protected $Name;
+	
+	/**
+	 * Creates a drop down option group
+	 * @param string|int $value
+	 * @param string $name
+	 * @return WPSettingsDropDownOptionGroup
+	 */
+	function __construct($name) {
+		$this->Name = $name;	
+		return $this;
+	}
+	
+}
+
+
 
 

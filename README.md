@@ -34,10 +34,23 @@ How to
 		
 		// Adds a config section
 		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
+
 		// Adds a text input
 		$section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
+
 		// Adds three checkboxes
 		$section->addField('test_checkboxes', 'Select cake', 'checkbox', array('my_options[cake_1]', 'my_options[cake_2]', 'my_options[cake_3]'), array(false, false, false), array('Cake 1', 'Cake 2', 'Cake 3'));
+
+		// Adds a dropdown with two groups
+		$dropdown = $section->addField('test_select2', 'Select day again', 'dropdown', 'my_options[day2]', 6);
+		// Uncomment this option to get a groupless option in the beginning
+		//$dropdown->addOption(0, 'Choose a Day');
+		$optgroup = $dropdown->addOptionGroup('Weekday');
+		$dropdown->addOption(1, 'Monday', $optgroup);
+		$dropdown->addOption(2, 'Tuesday', $optgroup);
+		$optgroup = $dropdown->addOptionGroup('Weekend');
+		$dropdown->addOption(6, 'Saturday', $optgroup);
+		$dropdown->addOption(7, 'Sunday', $optgroup);
 		
 		// Activate settings
 		$wp_settings_page->activeteSettings();
@@ -59,6 +72,7 @@ These are the types that can be used in addField() (the third parameter)
 * "url" - A URL text. Sanitized with esc_url()
 * "int" - A integer. Sanitized with (int)
 * "checkbox" - A checkbox, sanitizes to save 1 or 0
+* "dropdown" - A select type dropdown. Sanitizes with standard $wpdb->escape()
 
 
 Requirements
@@ -78,5 +92,6 @@ Todos
 Version history
 ------------
 	
-* 1.0 - A first simple version to handle just text values.
+* 1.2 - Added type: selectbox (see how to)
 * 1.1 - Added types: url, int, checkbox
+* 1.0 - A first simple version to handle just text values.
