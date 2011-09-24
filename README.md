@@ -41,6 +41,11 @@ How to
 		// Adds three checkboxes
 		$section->addField('test_checkboxes', 'Select cake', 'checkbox', array('my_options[cake_1]', 'my_options[cake_2]', 'my_options[cake_3]'), array(false, false, false), array('Cake 1', 'Cake 2', 'Cake 3'));
 
+		// Adds a dropdown without a option group
+		$dropdown = $section->addField('test_select', 'Select day', 'dropdown', 'my_options[day]', 'mon');
+		$dropdown->addOption('mon', 'Monday');
+		$dropdown->addOption('tues', 'Tuesday');
+
 		// Adds a dropdown with two groups
 		$dropdown = $section->addField('test_select2', 'Select day again', 'dropdown', 'my_options[day2]', 6);
 		// Uncomment this option to get a groupless option in the beginning
