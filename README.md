@@ -104,8 +104,9 @@ Todos
 Version history
 ------------
 	
-* 1.3 - Added type: radio (see how to)
-        Added update message to settings page
+* 1.3
+ * Added type: radio (see how to)
+ * Added update message to settings page
 * 1.2 - Added type: selectbox (see how to)
 * 1.1 - Added types: url, int, checkbox
 * 1.0 - A first simple version to handle just text values.
