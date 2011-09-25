@@ -56,6 +56,12 @@ How to
 		$optgroup = $dropdown->addOptionGroup('Weekend');
 		$dropdown->addOption(6, 'Saturday', $optgroup);
 		$dropdown->addOption(7, 'Sunday', $optgroup);
+
+		// Adds three "radio" options
+		$radio = $section->addField('test_radio', 'Select month', 'radio', 'my_options[month]', 'jan');
+		$radio->addOption('jan', 'January');
+		$radio->addOption('feb', 'February');
+		$radio->addOption('mar', 'March');
 		
 		// Activate settings
 		$wp_settings_page->activeteSettings();
@@ -78,6 +84,7 @@ These are the types that can be used in addField() (the third parameter)
 * "int" - A integer. Sanitized with (int)
 * "checkbox" - A checkbox, sanitizes to save 1 or 0
 * "dropdown" - A select type dropdown. Sanitizes with standard $wpdb->escape()
+* "radio" - A set of radio options. Sanitizes with the standard $wpdb->escape()
 
 
 Requirements
@@ -97,6 +104,8 @@ Todos
 Version history
 ------------
 	
+* 1.3 - Added type: radio (see how to)
+        Added update message to settings page
 * 1.2 - Added type: selectbox (see how to)
 * 1.1 - Added types: url, int, checkbox
 * 1.0 - A first simple version to handle just text values.

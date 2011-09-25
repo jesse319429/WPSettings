@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.2
+ * @version 1.3
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -72,6 +72,12 @@
 		$dropdown->addOption(6, 'Saturday', $optgroup);
 		$dropdown->addOption(7, 'Sunday', $optgroup);
 		
+		// Adds three "radio" options
+		$radio = $section->addField('test_radio', 'Select month', 'radio', 'my_options[month]', 'jan');
+		$radio->addOption('jan', 'January');
+		$radio->addOption('feb', 'February');
+		$radio->addOption('mar', 'March');
+		
 		// Activate settings
 		$wp_settings_page->activeteSettings();
 	}
@@ -99,6 +105,8 @@
 		A checkbox, sanitizes to save 1 or 0
 	"dropdown"
 		A select type dropdown. Sanitizes with standard $wpdb->escape()
+	"radio"
+		A set of radio options. Sanitizes with the standard $wpdb->escape()
 	
 	
 	
@@ -118,6 +126,9 @@
 	
 	VERSION HISTORY
 	
+	1.3
+		Added type: radio (see how to)
+		Added update message to settings page
 	1.2
 		Added type: selectbox (see how to)
 	1.1
@@ -281,6 +292,11 @@ class WPSettingsPage extends WPSettings {
 		<div class="wrap">
 			<div class="icon32" id="icon-options-general"><br></div>
 			<h2><?php echo ($this->Subtitle ? $this->Subtitle:$this->Title) ?></h2>
+			<?php if( isset($_GET['settings-updated']) ) : ?>
+			    <div id="message" class="updated">
+			        <p><strong><?php _e('Settings saved.') ?></strong></p>
+			    </div>
+			<?php endif; ?>
 			<?php if ($this->SettingsPageDescription) : ?>
 				<p><?php echo $this->SettingsPageDescription ?></p>
 			<?php endif; ?>
@@ -331,6 +347,7 @@ class WPSettingsPage extends WPSettings {
 							$new_input[$name] = $this->__sanitizeURL($input[$name]);
 						break;
 						case "dropdown":
+						case "radio":
 						case "text":
 						default:
 							$new_input[$name] = $this->__sanitizeText($input[$name]);
@@ -462,6 +479,10 @@ class WPSettingsSection extends WPSettings {
 		if ($type == "dropdown") {
 			$field = new WPSettingsFieldDropDown($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
 		}
+		// Create a radio
+		elseIf ($type == "radio") {
+			$field = new WPSettingsFieldRadio($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
+		}
 		// Create any other type
 		else {
 			$field = new WPSettingsField($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
@@ -536,6 +557,10 @@ class WPSettingsField extends WPSettingsSection {
 			// Drop down
 			case "dropdown":
 				$this->__outputDropDownField();
+			break;
+			// Radio
+			case "radio":
+				$this->__outputRadioField();
 			break;
 			// Checbox
 			case "checkbox":
@@ -676,6 +701,38 @@ class WPSettingsField extends WPSettingsSection {
 			<?php
 		}
 	}
+	
+	/**
+	 * Output field - Type "radio"
+	 */
+	private function __outputRadioField() {
+		foreach ($this->InputName AS $index => $input_name) {
+			
+			$width = 300;
+			
+			if ($this->HelpText[$index]) {
+				$width -= 150;
+				?>
+				<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
+				<?php
+			}
+			?>
+			<div style="width: 150px; float: left;">
+				<?php
+				foreach ($this->Options AS $option_index => $option) {
+					?>
+					<p>
+						<input type="radio" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" value="<? esc_attr_e( $option->Value )?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index.'_'.$option_index ) ?>" <?php checked($this->CurrentValue[$index], $option->Value) ?>> <label for="<?php esc_attr_e( $this->FieldId .'_'.$index.'_'.$option_index ) ?>"><?php esc_attr_e( $option->Name ) ?></label>
+					</p>
+					<?php
+				}
+				?>
+			</div>
+			<div style="clear: both;"></div>
+			<?php
+			
+		}
+	}
 		
 	
 }
@@ -762,6 +819,56 @@ class WPSettingsDropDownOptionGroup extends WPSettings {
 	 * @return WPSettingsDropDownOptionGroup
 	 */
 	function __construct($name) {
+		$this->Name = $name;	
+		return $this;
+	}
+	
+}
+
+
+
+/**
+ * WP Settings Field Radio class
+ * @see WPSettingsField
+ */
+class WPSettingsFieldRadio extends WPSettingsField {
+	
+	public $Options = array();
+	
+	/**
+	 * Add an option to the drop down
+	 * @param string|int $value
+	 * @param string $name Optional
+	 * @return WPSettingsRadioOption
+	 */
+	public function addOption($value, $name='') {
+		$name = ($name ? $name:$value);
+		$option = new WPSettingsRadioOption($value, $name);
+		$this->Options[] = $option;
+		return $option;
+	}
+	
+}
+
+
+
+/**
+ * WP Settings Field Radio Option class
+ * @see WPSettings
+ */
+class WPSettingsRadioOption extends WPSettings {
+	
+	protected $Value;
+	protected $Name;
+	
+	/**
+	 * Creates a radio option
+	 * @param string|int $value
+	 * @param string $name
+	 * @return WPSettingsRadioOption
+	 */
+	function __construct($value, $name) {
+		$this->Value = $value;
 		$this->Name = $name;	
 		return $this;
 	}
