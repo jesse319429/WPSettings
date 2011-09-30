@@ -73,6 +73,49 @@ How to
 		$wp_settings_page->output();
 	}
 
+### Subpages
+You can add subpages by calling the function addSubPage() on a WPSettingsPage object. All the regular WPSettings features works on a sub page. The sub page is put as a sub menu page link in the WP menu.
+	require_once('/path/to/wpsettings.php');
+	
+	add_action('admin_menu', 'my_admin_menu');
+	add_action('admin_init', 'my_admin_init');
+	
+	// This will contain the global WPSettingsPage object
+	global $wp_settings_page, $wp_settings_sub_page;
+	$wp_settings_page = null;
+	$wp_settings_sub_page = null;
+	
+	function my_admin_menu() {
+		global $wp_settings_page, $wp_settings_sub_page;
+		
+		// Create a settings page
+		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
+		
+		// Create a sub page
+		$wp_settings_sub_page = $wp_settings_page->addSubPage('My subpage', 'Subtitle', 'My menu subtitle', 'manage_options', 'my_unique_subpage_slug', 'my_admin_subpage_output');
+	}
+	
+	function my_admin_init() {
+		global $wp_settings_page, $wp_settings_sub_page;
+		
+		// Create sections and so on ...
+	}
+	
+	function my_admin_page_output() {
+		global $wp_settings_page;
+		
+		$wp_settings_page->output();
+	}
+	
+	function my_admin_subpage_output() {
+		global $wp_settings_page, $wp_settings_sub_page;
+		
+		// You can do
+		$wp_settings_page->output('my_unique_subpage_slug');
+		// Or you can do
+		// $wp_settings_sub_page->output();
+	}
+
 
 Field types
 ------------
@@ -104,6 +147,10 @@ Todos
 Version history
 ------------
 	
+* 1.4 (beta)
+ * Added the possibility to add subpages to a settings page using $wp_settings_page->addSubPage(). See how to.
+ * Changed a bit on page title and subtitle. On setting page it writes it "Title" if only title is given and "Title &mdash; Subtitle" if both is given.
+ * Changed so a settings form is only outputed if at least one section has been added via addSettingsSection(). This way a settings page can be created and default content can be put into it.
 * 1.3
  * Added type: radio (see how to)
  * Added update message to settings page

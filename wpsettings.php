@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.3
+ * @version 1.4
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -41,7 +41,7 @@
 		global $wp_settings_page;
 		
 		// Create a settings page
-		$wp_settings_page = new WPSettingsPage('My page title', 'My settings page title', 'My Menu Title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
+		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My Menu Title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
 	}
 	
 	function my_admin_init() {
@@ -89,6 +89,53 @@
 	}
 	----------------------------------	
 	
+	Subpages:
+	You can add subpages by calling the function addSubPage() on a WPSettingsPage object.
+	All the regular WPSettings features works on a sub page. The sub page is put as a sub menu
+	page link in the WP menu.
+	----------------------------------
+	require_once('/path/to/wpsettings.php');
+	
+	add_action('admin_menu', 'my_admin_menu');
+	add_action('admin_init', 'my_admin_init');
+	
+	// This will contain the global WPSettingsPage object
+	global $wp_settings_page, $wp_settings_sub_page;
+	$wp_settings_page = null;
+	$wp_settings_sub_page = null;
+	
+	function my_admin_menu() {
+		global $wp_settings_page, $wp_settings_sub_page;
+		
+		// Create a settings page
+		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
+		
+		// Create a sub page
+		$wp_settings_sub_page = $wp_settings_page->addSubPage('My subpage', 'Subtitle', 'My menu subtitle', 'manage_options', 'my_unique_subpage_slug', 'my_admin_subpage_output');
+	}
+	
+	function my_admin_init() {
+		global $wp_settings_page, $wp_settings_sub_page;
+		
+		// Create sections and so on ...
+	}
+	
+	function my_admin_page_output() {
+		global $wp_settings_page;
+		
+		$wp_settings_page->output();
+	}
+	
+	function my_admin_subpage_output() {
+		global $wp_settings_page, $wp_settings_sub_page;
+		
+		// You can do
+		$wp_settings_page->output('my_unique_subpage_slug');
+		// Or you can do
+		// $wp_settings_sub_page->output();
+	}
+	----------------------------------
+	
 	
 	
 	FIELD TYPES
@@ -126,6 +173,12 @@
 	
 	VERSION HISTORY
 	
+	1.4
+		Added the possibility to add subpages to a settings page using $wp_settings_page->addSubPage(). See how to.
+		Changed a bit on page title and subtitle. On setting page it writes it "Title" if only title is given and
+		"Title &mdash; Subtitle" if both is given.
+		Changed so a settings form is only outputed if at least one section has been added via addSettingsSection().
+		This way a settings page can be created and default content can be put into it. 
 	1.3
 		Added type: radio (see how to)
 		Added update message to settings page
@@ -221,6 +274,9 @@ class WPSettingsPage extends WPSettings {
 	protected $Subtitle;
 	protected $SettingsPageDescription;
 	protected $Sections = array();
+	protected $MenuSlug;
+	
+	private $__subpages = array();
 	
 	
 	/**
@@ -242,10 +298,33 @@ class WPSettingsPage extends WPSettings {
 		
 		$this->Title = $page_title;
 		$this->Subtitle = $page_subtitle;
+		$this->MenuSlug = $menu_slug;
 
 		add_menu_page($page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position);
 		
 		return $this;
+		
+	}
+	
+	/**
+	 * Add a sub page
+	 * @param string $page_title
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array $function
+	 * @return WPSettingsPage
+	 */
+	public function addSubPage($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+		
+		// Create sub page as.
+		$subpage = new WPSettingsSubPage(&$this, $page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function);
+		
+		// Store in this (parent) page array
+		$this->__subpages[$subpage->Id] = &$subpage;
+		
+		return $subpage;
 		
 	}
 	
@@ -286,12 +365,27 @@ class WPSettingsPage extends WPSettings {
 	
 	/**
 	 * Output the settings page
+	 * @param string $subpage
 	 */
-	public function output() {
+	public function output($subpage='') {
+		// Output a subpage (call that objects output() function)
+		if ($subpage && is_object($this->__subpages[$subpage])) {
+			$this->__subpages[$subpage]->output();
+		}
+		// Output this object page
+		else {
+			$this->__output();
+		}
+	}
+	
+	/**
+	 * The actual output of this objects page
+	 */
+	private function __output() {
 		?>
 		<div class="wrap">
 			<div class="icon32" id="icon-options-general"><br></div>
-			<h2><?php echo ($this->Subtitle ? $this->Subtitle:$this->Title) ?></h2>
+			<h2><?php echo $this->Title ?><?php echo ($this->Title && $this->Subtitle ? " &mdash; ".$this->Subtitle:"") ?></h2>
 			<?php if( isset($_GET['settings-updated']) ) : ?>
 			    <div id="message" class="updated">
 			        <p><strong><?php _e('Settings saved.') ?></strong></p>
@@ -300,13 +394,15 @@ class WPSettingsPage extends WPSettings {
 			<?php if ($this->SettingsPageDescription) : ?>
 				<p><?php echo $this->SettingsPageDescription ?></p>
 			<?php endif; ?>
-			<form action="options.php" method="post">
-			<?php settings_fields($this->Id); ?>
-			<?php do_settings_sections($this->Id); ?>
-			<p class="submit">
-				<input name="Submit" type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes'); ?>" />
-			</p>
-			</form>
+			<?php if ( !empty($this->Sections )): ?>
+				<form action="options.php" method="post">
+				<?php settings_fields($this->Id); ?>
+				<?php do_settings_sections($this->Id); ?>
+				<p class="submit">
+					<input name="Submit" type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes'); ?>" />
+				</p>
+				</form>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
@@ -413,6 +509,49 @@ class WPSettingsPage extends WPSettings {
 	}
 	
 
+}
+
+
+
+/**
+ * WP Settings Sub Page class
+ * @see WPSettingsPage
+ */
+class WPSettingsSubPage extends WPSettingsPage {
+
+	public $Id;
+	
+	protected $Title;
+	protected $Subtitle;
+	protected $MenuSlug;
+	
+	
+	/**
+	 * Create a WP Settings Page
+	 * @todo Allow both menu page and options page?
+	 * @param WPSettingsPage $WPSettingsPage
+	 * @param string $page_title 
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array|bool $function
+	 * @return WPSettingsPage
+	 */
+	public function __construct(WPSettingsPage &$WPSettingsPage, $page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+	
+		$this->Id = $menu_slug;
+		
+		$this->Title = $page_title;
+		$this->Subtitle = $page_subtitle;
+		$this->MenuSlug = $menu_slug;
+
+		add_submenu_page($WPSettingsPage->MenuSlug, $page_title, $menu_title, $capability, $menu_slug, $function);
+		
+		return $this;
+		
+	}
+		
 }
 
 
