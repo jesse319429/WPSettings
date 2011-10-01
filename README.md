@@ -147,7 +147,7 @@ Todos
 Version history
 ------------
 	
-* 1.4 (beta)
+* 1.4
  * Added the possibility to add subpages to a settings page using $wp_settings_page->addSubPage(). See how to.
  * Changed a bit on page title and subtitle. On setting page it writes it "Title" if only title is given and "Title &mdash; Subtitle" if both is given.
  * Changed so a settings form is only outputed if at least one section has been added via addSettingsSection(). This way a settings page can be created and default content can be put into it.
