@@ -147,6 +147,8 @@ Todos
 Version history
 ------------
 	
+* 1.4.1
+ * Bugfix for subpage settings not beeing saved correct.
 * 1.4
  * Added the possibility to add subpages to a settings page using $wp_settings_page->addSubPage(). See how to.
  * Changed a bit on page title and subtitle. On setting page it writes it "Title" if only title is given and "Title &mdash; Subtitle" if both is given.

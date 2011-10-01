@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.4
+ * @version 1.4.1
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -173,6 +173,8 @@
 	
 	VERSION HISTORY
 	
+	1.4.1
+		Bugfix for subpage settings not beeing saved correct.
 	1.4
 		Added the possibility to add subpages to a settings page using $wp_settings_page->addSubPage(). See how to.
 		Changed a bit on page title and subtitle. On setting page it writes it "Title" if only title is given and
@@ -334,30 +336,34 @@ class WPSettingsPage extends WPSettings {
 	 */
 	public function activeteSettings() {
 
-		// Get all uniques post names
-		$names = array();
-		// - Start looping through section
-		foreach ($this->Sections AS $index => $section) {
-			// - Start looping through each field in section
-			foreach ($section->Fields AS $index2 => $field) {
-				// - Start looping through each input name in this field (most often only 1)
-				foreach ($field->InputName AS $index3 => $input_name) {
-					if (strpos($input_name, "[") !== false) {
-						$temp = explode("[", $input_name);
-						$name = $temp[0];
+		// Start looping through all pages
+		$pages = array_merge(array($this), $this->__subpages);
+		foreach ($pages AS $index => $page) {
+			// Get all uniques post names
+			$names = array();
+			// - Start looping through section
+			foreach ($page->Sections AS $index => $section) {
+				// - Start looping through each field in section
+				foreach ($section->Fields AS $index2 => $field) {
+					// - Start looping through each input name in this field (most often only 1)
+					foreach ($field->InputName AS $index3 => $input_name) {
+						if (strpos($input_name, "[") !== false) {
+							$temp = explode("[", $input_name);
+							$name = $temp[0];
+						}
+						else {
+							$name = $input_name;
+						}
+						$names[] = $name;
 					}
-					else {
-						$name = $input_name;
-					}
-					$names[] = $name;
 				}
 			}
-		}
-		$names = array_unique($names);
-		
-		// Register them for update
-		foreach ($names AS $index => $name) {
-		 	register_setting($this->Id, $name, array($this, 'sanitize'));
+			// Get unique names
+			$names = array_unique($names);
+			// Register them for update
+			foreach ($names AS $index => $name) {
+			 	register_setting($this->Id, $name, array($page, 'sanitize'));
+			}
 		}
 		
 	}
