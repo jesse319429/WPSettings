@@ -156,4 +156,4 @@ Version history
  * Added update message to settings page
 * 1.2 - Added type: selectbox (see how to)
 * 1.1 - Added types: url, int, checkbox
-* 1.0 - A first simple version to handle just text values.
+* 1.0 - A first simple version to handle just text values. 

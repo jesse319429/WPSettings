@@ -324,7 +324,7 @@ class WPSettingsPage extends WPSettings {
 		// Store in this (parent) page array
 		$this->__subpages[$subpage->Id] = &$subpage;
 		
-		return $subpage;
+		return $subpage; 
 		
 	}
 	
