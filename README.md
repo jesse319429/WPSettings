@@ -27,6 +27,8 @@ How to
 		
 		// Create a settings page
 		$wp_settings_page = new WPSettingsPage('My page title', 'My settings page title', 'My Menu Title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
+		// Set a id and add a css class so we can change the icon
+		$wp_settings_page->setIcon('my-icon-id', array('my-icon-class'));
 	}
 	
 	function my_admin_init() {
@@ -147,6 +149,8 @@ Todos
 Version history
 ------------
 	
+* 1.5
+ * Added $wp_settings_page->setIcon($icon_id, $add_classes) which can be used to change the HTML id and class of the settings page icon. Togheter with some css it can be used to change the icon. (WPSettings currently doesn't create the css required). See the simple example.
 * 1.4.1
  * Bugfix for subpage settings not beeing saved correct.
 * 1.4

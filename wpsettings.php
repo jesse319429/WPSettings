@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.4.1
+ * @version 1.5
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -42,6 +42,8 @@
 		
 		// Create a settings page
 		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My Menu Title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
+		// Set a id and add a css class so we can change the icon
+		$wp_settings_page->setIcon('my-icon-id', array('my-icon-class'));
 	}
 	
 	function my_admin_init() {
@@ -173,6 +175,10 @@
 	
 	VERSION HISTORY
 	
+	1.5
+		Added $wp_settings_page->setIcon($icon_id, $add_classes) which can be used to change the HTML id and class
+		of the settings page icon. Togheter with some css it can be used to change the icon. (WPSettings currently
+		doesn't create the css required). See the simple example.
 	1.4.1
 		Bugfix for subpage settings not beeing saved correct.
 	1.4
@@ -279,6 +285,8 @@ class WPSettingsPage extends WPSettings {
 	protected $MenuSlug;
 	
 	private $__subpages = array();
+	private $__pageIconClass = array();
+	private $__pageIconId;
 	
 	
 	/**
@@ -390,7 +398,7 @@ class WPSettingsPage extends WPSettings {
 	private function __output() {
 		?>
 		<div class="wrap">
-			<div class="icon32" id="icon-options-general"><br></div>
+			<?php $this->__getIcon(); ?>
 			<h2><?php echo $this->Title ?><?php echo ($this->Title && $this->Subtitle ? " &mdash; ".$this->Subtitle:"") ?></h2>
 			<?php if( isset($_GET['settings-updated']) ) : ?>
 			    <div id="message" class="updated">
@@ -478,6 +486,17 @@ class WPSettingsPage extends WPSettings {
 	
 	
 	/**
+	 * Set page icon
+	 * @param string $icon_id
+	 * @param array $add_classes Optional
+	 */
+	public function setIcon($icon_id, $add_classes=array()) {
+		$this->__pageIconId = $icon_id;
+		$this->__pageIconClass = $add_classes;
+	}
+	
+	
+	/**
 	 * Sanitize plain text
 	 * @param string $text
 	 * @return string
@@ -512,6 +531,20 @@ class WPSettingsPage extends WPSettings {
 	 */
 	private function __sanitizeCheckbox($checked) {
 		return ($checked ? 1:0);
+	}
+	
+	/**
+	 * Get page icon
+	 */
+	private function __getIcon() {
+		$class = array("icon32");
+		if (!empty($this->__pageIconClass)) {
+			$class = array_merge($class, $this->__pageIconClass);
+		}
+		$id = ($this->__pageIconId ? $this->__pageIconId:"icon-options-general");
+		?>
+		<div class="<?php echo implode(" ", $class)?>" id="<?php echo $id ?>"><br></div>
+		<?php
 	}
 	
 
