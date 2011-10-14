@@ -149,7 +149,7 @@ Todos
 Version history
 ------------
 	
-* 1.5
+* 1.5.1
  * Bugfix set default position to null instead of 100. If there is two pages on 100 only one will show. But if you just use null they will show in the bottom. After each other.
 * 1.5
  * Added $wp_settings_page->setIcon($icon_id, $add_classes) which can be used to change the HTML id and class of the settings page icon. Togheter with some css it can be used to change the icon. (WPSettings currently doesn't create the css required). See the simple example.
