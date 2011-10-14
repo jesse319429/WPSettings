@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.5
+ * @version 1.5.1
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -175,6 +175,9 @@
 	
 	VERSION HISTORY
 	
+	1.5.1
+		Bugfix set default position to null instead of 100. If there is two pages on 100 only one will show. But if
+		you just use null they will show in the bottom. After each other.
 	1.5
 		Added $wp_settings_page->setIcon($icon_id, $add_classes) which can be used to change the HTML id and class
 		of the settings page icon. Togheter with some css it can be used to change the icon. (WPSettings currently
@@ -299,10 +302,10 @@ class WPSettingsPage extends WPSettings {
 	 * @param string $menu_slug
 	 * @param string|array $function
 	 * @param string $icon_url Optional
-	 * @param int $position Optional
+	 * @param int|null $position Optional
 	 * @return WPSettingsPage
 	 */
-	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, $icon_url='', $position=100) {
+	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, $icon_url='', $position=null) {
 	
 		$this->Id = $menu_slug;
 		
