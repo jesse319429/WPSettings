@@ -149,6 +149,8 @@ Todos
 Version history
 ------------
 	
+* 1.5.2
+ * Wrap eeeverything within a class_exists() check to make sure the code isn't included twice through different files, and by that causes trouble.
 * 1.5.1
  * Bugfix set default position to null instead of 100. If there is two pages on 100 only one will show. But if you just use null they will show in the bottom. After each other.
 * 1.5

@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.5.1
+ * @version 1.5.2
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -175,6 +175,9 @@
 	
 	VERSION HISTORY
 	
+	1.5.2
+		Wrap eeeverything within a class_exists() check to make sure the code isn't included twice through
+		different files, and by that causes trouble.
 	1.5.1
 		Bugfix set default position to null instead of 100. If there is two pages on 100 only one will show. But if
 		you just use null they will show in the bottom. After each other.
@@ -229,833 +232,837 @@
 *************************************/
 
 
-
-/**
- * WP Settings base class - Extended by WPSettingsPage, WPSettingsSection and WPSettingsField
- */
-class WPSettings {
-
+// Just make sure the code isn't included once if two plugins or themes or something includes this
+// lib through two different files. :) WPSettings might just get *that* popular.
+if (!class_exists('WPSettings')) {
+	
+	
 	/**
-	 * Magic get function, gets method first if exists, or property
-	 * @param string $name
-	 * @return mixed
-	 * @throws Exception
+	 * WP Settings base class - Extended by WPSettingsPage, WPSettingsSection and WPSettingsField
 	 */
-	public function __get($name) {
-		if (method_exists($this, $name)) {
-			return $this->$name();
-		}
-		elseIf (isset($this->$name)) {
-			return $this->$name;
-		}
-		else {
-			// isset is false on null parameters, this "fixes" that checking if tha parameter truely doesn't exist
-			$props = get_object_vars($this);
-			if (array_key_exists($name, $props)) {
+	class WPSettings {
+	
+		/**
+		 * Magic get function, gets method first if exists, or property
+		 * @param string $name
+		 * @return mixed
+		 * @throws Exception
+		 */
+		public function __get($name) {
+			if (method_exists($this, $name)) {
+				return $this->$name();
+			}
+			elseIf (isset($this->$name)) {
 				return $this->$name;
 			}
 			else {
-				throw new Exception("Undefined method or property ".$name);
+				// isset is false on null parameters, this "fixes" that checking if tha parameter truely doesn't exist
+				$props = get_object_vars($this);
+				if (array_key_exists($name, $props)) {
+					return $this->$name;
+				}
+				else {
+					throw new Exception("Undefined method or property ".$name);
+				}
 			}
 		}
+		
+		/**
+		 * Magic set function, does nothing really at this time :)
+		 * @param string $name
+		 * @param mixed $value
+		 */
+		public function __set($name, $value) {
+			$this->$name = $value;
+		} 
+	
 	}
 	
-	/**
-	 * Magic set function, does nothing really at this time :)
-	 * @param string $name
-	 * @param mixed $value
-	 */
-	public function __set($name, $value) {
-		$this->$name = $value;
-	} 
-
-}
-
-
-
-/**
- * WP Settings Page class
- * @see WPSettings
- */
-class WPSettingsPage extends WPSettings {
-
-	public $Id;
-	
-	protected $Title;
-	protected $Subtitle;
-	protected $SettingsPageDescription;
-	protected $Sections = array();
-	protected $MenuSlug;
-	
-	private $__subpages = array();
-	private $__pageIconClass = array();
-	private $__pageIconId;
 	
 	
 	/**
-	 * Create a WP Settings Page
-	 * @todo Allow both menu page and options page?
-	 * @param string $page_title 
-	 * @param string $page_subtitle
-	 * @param string $menu_title
-	 * @param string $capability
-	 * @param string $menu_slug
-	 * @param string|array $function
-	 * @param string $icon_url Optional
-	 * @param int|null $position Optional
-	 * @return WPSettingsPage
+	 * WP Settings Page class
+	 * @see WPSettings
 	 */
-	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, $icon_url='', $position=null) {
+	class WPSettingsPage extends WPSettings {
 	
-		$this->Id = $menu_slug;
+		public $Id;
 		
-		$this->Title = $page_title;
-		$this->Subtitle = $page_subtitle;
-		$this->MenuSlug = $menu_slug;
-
-		add_menu_page($page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position);
+		protected $Title;
+		protected $Subtitle;
+		protected $SettingsPageDescription;
+		protected $Sections = array();
+		protected $MenuSlug;
 		
-		return $this;
+		private $__subpages = array();
+		private $__pageIconClass = array();
+		private $__pageIconId;
 		
-	}
+		
+		/**
+		 * Create a WP Settings Page
+		 * @todo Allow both menu page and options page?
+		 * @param string $page_title 
+		 * @param string $page_subtitle
+		 * @param string $menu_title
+		 * @param string $capability
+		 * @param string $menu_slug
+		 * @param string|array $function
+		 * @param string $icon_url Optional
+		 * @param int|null $position Optional
+		 * @return WPSettingsPage
+		 */
+		public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, $icon_url='', $position=null) {
+		
+			$this->Id = $menu_slug;
+			
+			$this->Title = $page_title;
+			$this->Subtitle = $page_subtitle;
+			$this->MenuSlug = $menu_slug;
 	
-	/**
-	 * Add a sub page
-	 * @param string $page_title
-	 * @param string $page_subtitle
-	 * @param string $menu_title
-	 * @param string $capability
-	 * @param string $menu_slug
-	 * @param string|array $function
-	 * @return WPSettingsPage
-	 */
-	public function addSubPage($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+			add_menu_page($page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position);
+			
+			return $this;
+			
+		}
 		
-		// Create sub page as.
-		$subpage = new WPSettingsSubPage(&$this, $page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function);
+		/**
+		 * Add a sub page
+		 * @param string $page_title
+		 * @param string $page_subtitle
+		 * @param string $menu_title
+		 * @param string $capability
+		 * @param string $menu_slug
+		 * @param string|array $function
+		 * @return WPSettingsPage
+		 */
+		public function addSubPage($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+			
+			// Create sub page as.
+			$subpage = new WPSettingsSubPage(&$this, $page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function);
+			
+			// Store in this (parent) page array
+			$this->__subpages[$subpage->Id] = &$subpage;
+			
+			return $subpage; 
+			
+		}
 		
-		// Store in this (parent) page array
-		$this->__subpages[$subpage->Id] = &$subpage;
-		
-		return $subpage; 
-		
-	}
+		/**
+		 * Activate settings. Is required to be run after all sections and fields has been added to register the settings so that
+		 * WordPress saves the data
+		 */
+		public function activeteSettings() {
 	
-	/**
-	 * Activate settings. Is required to be run after all sections and fields has been added to register the settings so that
-	 * WordPress saves the data
-	 */
-	public function activeteSettings() {
-
-		// Start looping through all pages
-		$pages = array_merge(array($this), $this->__subpages);
-		foreach ($pages AS $index => $page) {
-			// Get all uniques post names
-			$names = array();
-			// - Start looping through section
-			foreach ($page->Sections AS $index => $section) {
-				// - Start looping through each field in section
-				foreach ($section->Fields AS $index2 => $field) {
-					// - Start looping through each input name in this field (most often only 1)
-					foreach ($field->InputName AS $index3 => $input_name) {
+			// Start looping through all pages
+			$pages = array_merge(array($this), $this->__subpages);
+			foreach ($pages AS $index => $page) {
+				// Get all uniques post names
+				$names = array();
+				// - Start looping through section
+				foreach ($page->Sections AS $index => $section) {
+					// - Start looping through each field in section
+					foreach ($section->Fields AS $index2 => $field) {
+						// - Start looping through each input name in this field (most often only 1)
+						foreach ($field->InputName AS $index3 => $input_name) {
+							if (strpos($input_name, "[") !== false) {
+								$temp = explode("[", $input_name);
+								$name = $temp[0];
+							}
+							else {
+								$name = $input_name;
+							}
+							$names[] = $name;
+						}
+					}
+				}
+				// Get unique names
+				$names = array_unique($names);
+				// Register them for update
+				foreach ($names AS $index => $name) {
+				 	register_setting($this->Id, $name, array($page, 'sanitize'));
+				}
+			}
+			
+		}
+		
+		
+		/**
+		 * Output the settings page
+		 * @param string $subpage
+		 */
+		public function output($subpage='') {
+			// Output a subpage (call that objects output() function)
+			if ($subpage && is_object($this->__subpages[$subpage])) {
+				$this->__subpages[$subpage]->output();
+			}
+			// Output this object page
+			else {
+				$this->__output();
+			}
+		}
+		
+		/**
+		 * The actual output of this objects page
+		 */
+		private function __output() {
+			?>
+			<div class="wrap">
+				<?php $this->__getIcon(); ?>
+				<h2><?php echo $this->Title ?><?php echo ($this->Title && $this->Subtitle ? " &mdash; ".$this->Subtitle:"") ?></h2>
+				<?php if( isset($_GET['settings-updated']) ) : ?>
+				    <div id="message" class="updated">
+				        <p><strong><?php _e('Settings saved.') ?></strong></p>
+				    </div>
+				<?php endif; ?>
+				<?php if ($this->SettingsPageDescription) : ?>
+					<p><?php echo $this->SettingsPageDescription ?></p>
+				<?php endif; ?>
+				<?php if ( !empty($this->Sections )): ?>
+					<form action="options.php" method="post">
+					<?php settings_fields($this->Id); ?>
+					<?php do_settings_sections($this->Id); ?>
+					<p class="submit">
+						<input name="Submit" type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes'); ?>" />
+					</p>
+					</form>
+				<?php endif; ?>
+			</div>
+			<?php
+		}
+		
+		
+		/**
+		 * Sanitize data before it's stored in the databse
+		 */
+		public function sanitize($input) {
+			
+			// Loop through sections
+			foreach ($this->Sections AS $section_index => $section) {
+				// Loop through fields in section
+				foreach ($section->Fields AS $field_index => $field) {
+					// Input name is a loop as well. Even though they all are the same type
+					foreach ($field->InputName AS $input_index => $input_name) {
+						// Get name
 						if (strpos($input_name, "[") !== false) {
 							$temp = explode("[", $input_name);
-							$name = $temp[0];
+							$name = str_replace("]", "", $temp[1]);
 						}
 						else {
 							$name = $input_name;
 						}
-						$names[] = $name;
-					}
-				}
-			}
-			// Get unique names
-			$names = array_unique($names);
-			// Register them for update
-			foreach ($names AS $index => $name) {
-			 	register_setting($this->Id, $name, array($page, 'sanitize'));
-			}
-		}
-		
-	}
-	
-	
-	/**
-	 * Output the settings page
-	 * @param string $subpage
-	 */
-	public function output($subpage='') {
-		// Output a subpage (call that objects output() function)
-		if ($subpage && is_object($this->__subpages[$subpage])) {
-			$this->__subpages[$subpage]->output();
-		}
-		// Output this object page
-		else {
-			$this->__output();
-		}
-	}
-	
-	/**
-	 * The actual output of this objects page
-	 */
-	private function __output() {
-		?>
-		<div class="wrap">
-			<?php $this->__getIcon(); ?>
-			<h2><?php echo $this->Title ?><?php echo ($this->Title && $this->Subtitle ? " &mdash; ".$this->Subtitle:"") ?></h2>
-			<?php if( isset($_GET['settings-updated']) ) : ?>
-			    <div id="message" class="updated">
-			        <p><strong><?php _e('Settings saved.') ?></strong></p>
-			    </div>
-			<?php endif; ?>
-			<?php if ($this->SettingsPageDescription) : ?>
-				<p><?php echo $this->SettingsPageDescription ?></p>
-			<?php endif; ?>
-			<?php if ( !empty($this->Sections )): ?>
-				<form action="options.php" method="post">
-				<?php settings_fields($this->Id); ?>
-				<?php do_settings_sections($this->Id); ?>
-				<p class="submit">
-					<input name="Submit" type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes'); ?>" />
-				</p>
-				</form>
-			<?php endif; ?>
-		</div>
-		<?php
-	}
-	
-	
-	/**
-	 * Sanitize data before it's stored in the databse
-	 */
-	public function sanitize($input) {
-		
-		// Loop through sections
-		foreach ($this->Sections AS $section_index => $section) {
-			// Loop through fields in section
-			foreach ($section->Fields AS $field_index => $field) {
-				// Input name is a loop as well. Even though they all are the same type
-				foreach ($field->InputName AS $input_index => $input_name) {
-					// Get name
-					if (strpos($input_name, "[") !== false) {
-						$temp = explode("[", $input_name);
-						$name = str_replace("]", "", $temp[1]);
-					}
-					else {
-						$name = $input_name;
-					}
-					// Isn't a part of this input
-					if (!isset($input[$name])) {
-						continue;
-					}
-					// Sanitize by type
-					switch ($field->Type) {
-						case "checkbox":
-							$new_input[$name] = $this->__sanitizeCheckbox($input[$name]);
-						break;
-						case "int":
-							$new_input[$name] = $this->__sanitizeInt($input[$name]);
-						break;
-						case "url":
-							$new_input[$name] = $this->__sanitizeURL($input[$name]);
-						break;
-						case "dropdown":
-						case "radio":
-						case "text":
-						default:
-							$new_input[$name] = $this->__sanitizeText($input[$name]);
-						break;
-					}
-				}
-			}
-		}
-		
-		return $new_input;
-	}
-	
-	
-	/**
-	 * Add a new section
-	 * @param string $id
-	 * @param string $headline
-	 * @param string $description Optional
-	 * @returns WPSettingsSection
-	 */
-	public function addSettingsSection($id, $headline, $description='') {
-		$section = new WPSettingsSection($this, $id, $headline, $description);	
-		$this->Sections[] = &$section;
-		return $section;
-	}
-	
-	
-	/**
-	 * Set page icon
-	 * @param string $icon_id
-	 * @param array $add_classes Optional
-	 */
-	public function setIcon($icon_id, $add_classes=array()) {
-		$this->__pageIconId = $icon_id;
-		$this->__pageIconClass = $add_classes;
-	}
-	
-	
-	/**
-	 * Sanitize plain text
-	 * @param string $text
-	 * @return string
-	 */
-	private function __sanitizeText($text) {
-		global $wpdb;
-		return $wpdb->escape($text);
-	}
-	
-	/**
-	 * Sanitize url
-	 * @param string $text
-	 * @return string
-	 */
-	private function __sanitizeURL($text) {
-		return esc_url($text);
-	}
-	
-	/**
-	 * Sanitize int
-	 * @param mixed $text
-	 * @return int
-	 */
-	private function __sanitizeInt($text) {
-		return (int)($text);
-	}
-	
-	/**
-	 * Sanitize checkbox
-	 * @param mixed $checked
-	 * @return int
-	 */
-	private function __sanitizeCheckbox($checked) {
-		return ($checked ? 1:0);
-	}
-	
-	/**
-	 * Get page icon
-	 */
-	private function __getIcon() {
-		$class = array("icon32");
-		if (!empty($this->__pageIconClass)) {
-			$class = array_merge($class, $this->__pageIconClass);
-		}
-		$id = ($this->__pageIconId ? $this->__pageIconId:"icon-options-general");
-		?>
-		<div class="<?php echo implode(" ", $class)?>" id="<?php echo $id ?>"><br></div>
-		<?php
-	}
-	
-
-}
-
-
-
-/**
- * WP Settings Sub Page class
- * @see WPSettingsPage
- */
-class WPSettingsSubPage extends WPSettingsPage {
-
-	public $Id;
-	
-	protected $Title;
-	protected $Subtitle;
-	protected $MenuSlug;
-	
-	
-	/**
-	 * Create a WP Settings Page
-	 * @todo Allow both menu page and options page?
-	 * @param WPSettingsPage $WPSettingsPage
-	 * @param string $page_title 
-	 * @param string $page_subtitle
-	 * @param string $menu_title
-	 * @param string $capability
-	 * @param string $menu_slug
-	 * @param string|array|bool $function
-	 * @return WPSettingsPage
-	 */
-	public function __construct(WPSettingsPage &$WPSettingsPage, $page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
-	
-		$this->Id = $menu_slug;
-		
-		$this->Title = $page_title;
-		$this->Subtitle = $page_subtitle;
-		$this->MenuSlug = $menu_slug;
-
-		add_submenu_page($WPSettingsPage->MenuSlug, $page_title, $menu_title, $capability, $menu_slug, $function);
-		
-		return $this;
-		
-	}
-		
-}
-
-
-
-/**
- * WP Settings Section class
- * @see WPSettings
- */
-class WPSettingsSection extends WPSettings {
-
-	public $Id;
-	public $SectionId;
-	
-	protected $Headline;
-	protected $Description;
-	protected $Fields = array();
-	
-	/**
-	 * Create a WP Settings Section (called by WPSettingsPage->addSettingsSection()
-	 * @see WPSettingsPage->addSettingsSection
-	 * @param WPSettingsPage $WPSettingsPage
-	 * @param string $section_id
-	 * @param string $headline
-	 * @param string $description Optional
-	 * @return WPSettingsSection
-	 */
-	function __construct(WPSettingsPage &$WPSettingsPage, $section_id, $headline, $description='') {
-		
-		$this->Id = $WPSettingsPage->Id;
-		$this->SectionId = $this->Id."_".$section_id;
-		$this->Headline = $headline;
-		$this->Description = $description;
-
-		add_settings_section($this->SectionId,
-			$this->Headline,
-			array($this, 'outputDescription'),
-			$this->Id
-		);
-		
-		return $this;
-		
-	}
-	
-	/**
-	 * Output description
-	 */
-	public function outputDescription() {
-		if ($this->Description) {
-			?><p><?php echo $this->Description ?></p><?php
-		}
-	}
-	
-	/**
-	 * Add a WP Settings Field 
-	 * @param string $field_id
-	 * @param string $headline
-	 * @param string|array $input_name
-	 * @param string|array $current_value
-	 * @param string|array $help_text
-	 * @return WPSettingsField
-	 */
-	public function addField($field_id, $headline, $type, $input_name, $current_value='', $help_text='') {
-		// Create dropdown
-		if ($type == "dropdown") {
-			$field = new WPSettingsFieldDropDown($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
-		}
-		// Create a radio
-		elseIf ($type == "radio") {
-			$field = new WPSettingsFieldRadio($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
-		}
-		// Create any other type
-		else {
-			$field = new WPSettingsField($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
-		}
-		$this->Fields[] = &$field;
-		return $field;
-	}
-
-}
-
-
-
-/**
- * WP Settings Field class
- * @see WPSettingsSection
- */
-class WPSettingsField extends WPSettingsSection {
-
-	public $Id;
-	public $SectionId;
-	public $FieldId;
-	
-	protected $Headline;
-	protected $Type;
-	protected $InputName;
-	protected $CurrentValue;
-	protected $HelpText;
-	
-	/**
-	 * Creates a WP Settings Field (called by WPSettingsSection->addField). 
-	 * Possible values for $type is:
-	 * - text (regular text field)
-	 * @see WPSettingsSection->addField
-	 * @param WPSettingsSection $WPSettingsSection
-	 * @param string $field_id
-	 * @param string $headline
-	 * @param string $type 
-	 * @param string|array $input_name
-	 * @param string[array $current_value
-	 * @param string|array $help_text
-	 * @return WPSettingsField
-	 */
-	function __construct(WPSettingsSection &$WPSettingsSection, $field_id, $headline, $type, $input_name, $current_value='', $help_text='') {
-	
-		$this->Id = $WPSettingsSection->Id;
-		$this->SectionId = $WPSettingsSection->SectionId;
-		$this->FieldId = $this->SectionId."_".$field_id;
-		$this->Headline = $headline;
-		$this->Type = $type;
-		// Always store them as array, multiple elements can be added foreach field
-		$this->InputName = (is_array($input_name) ? $input_name:array($input_name));
-		$this->CurrentValue = (is_array($current_value) ? $current_value:array($current_value));
-		$this->HelpText = (is_array($help_text) ? $help_text:array($help_text));
-	
- 		add_settings_field($this->FieldId,
-			$this->Headline,
-			array($this, 'outputField'),
-			$this->Id,
-			$this->SectionId
-		);
-		
-		return $this;
-		
-	}
-	
-	/**
-	 * Output field (calls private functions by type)
-	 */
-	public function outputField() {
-		switch ($this->Type) {
-			
-			// Drop down
-			case "dropdown":
-				$this->__outputDropDownField();
-			break;
-			// Radio
-			case "radio":
-				$this->__outputRadioField();
-			break;
-			// Checbox
-			case "checkbox":
-				$this->__outputCheckboxField();
-			break;
-			// Int
-			case "int":
-				$this->__outputTextField();
-			break;
-			// URL
-			case "url":
-			// Regular text field
-			case "text":
-			default:
-				$this->__outputTextField();
-			break;
-		
-		}
-	}
-	
-	/**
-	 * Output field - Type "text" (regular text field)
-	 */
-	private function __outputTextField() {
-		foreach ($this->InputName AS $index => $input_name) {
-			
-			$width = 300;
-			
-			if ($this->HelpText[$index]) {
-				$width -= 150;
-				?>
-				<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
-				<?php
-			}
-			?>
-			<div style="width: 150px; float: left;">
-				<input type="text" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr_e( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" />
-			</div>
-			<div style="clear: both;"></div>
-			<?php
-			
-		}
-	}
-	
-	/**
-	 * Output field - Type "checkbox"
-	 */
-	private function __outputCheckboxField() {
-		foreach ($this->InputName AS $index => $input_name) {
-			
-			$width = 300;
-			
-			if ($this->HelpText[$index]) {
-				$width -= 150;
-				?>
-				<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
-				<?php
-			}
-			?>
-			<div style="width: 150px; float: left;">
-				<input type="checkbox" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> />
-			</div>
-			<div style="clear: both;"></div>
-			<?php
-			
-		}
-	}
-	
-	/**
-	 * Output field - Type "dropdown"
-	 */
-	private function __outputDropDownField() {
-		foreach ($this->InputName AS $index => $input_name) {
-			
-			$width = 300;
-			
-			if ($this->HelpText[$index]) {
-				$width -= 150;
-				?>
-				<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
-				<?php
-			}
-			?>
-			<div style="width: 150px; float: left;">
-				<select name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>">
-					<?php
-					// Loop options through option groups
-					if ($this->OptionGroups) {
-						// First get options with specifically no group (default value most likely)
-						$this->__outputDropDownOptions($index, false);
-						// Then loop through the option groups
-						foreach ($this->OptionGroups AS $optgroup_index => $optgroup) {
-							?>
-							<optgroup label="<?php esc_attr_e( $optgroup->Name )?>">
-								<?php
-								$this->__outputDropDownOptions($index, $optgroup);
-								?>
-							</optgroup>
-							<?php
+						// Isn't a part of this input
+						if (!isset($input[$name])) {
+							continue;
+						}
+						// Sanitize by type
+						switch ($field->Type) {
+							case "checkbox":
+								$new_input[$name] = $this->__sanitizeCheckbox($input[$name]);
+							break;
+							case "int":
+								$new_input[$name] = $this->__sanitizeInt($input[$name]);
+							break;
+							case "url":
+								$new_input[$name] = $this->__sanitizeURL($input[$name]);
+							break;
+							case "dropdown":
+							case "radio":
+							case "text":
+							default:
+								$new_input[$name] = $this->__sanitizeText($input[$name]);
+							break;
 						}
 					}
-					// Loop all options without groups
-					else {
-						$this->__outputDropDownOptions($index);
-					} 
-					?>
-				</select>
-			</div>
-			<div style="clear: both;"></div>
-			<?php
+				}
+			}
 			
+			return $new_input;
 		}
+		
+		
+		/**
+		 * Add a new section
+		 * @param string $id
+		 * @param string $headline
+		 * @param string $description Optional
+		 * @returns WPSettingsSection
+		 */
+		public function addSettingsSection($id, $headline, $description='') {
+			$section = new WPSettingsSection($this, $id, $headline, $description);	
+			$this->Sections[] = &$section;
+			return $section;
+		}
+		
+		
+		/**
+		 * Set page icon
+		 * @param string $icon_id
+		 * @param array $add_classes Optional
+		 */
+		public function setIcon($icon_id, $add_classes=array()) {
+			$this->__pageIconId = $icon_id;
+			$this->__pageIconClass = $add_classes;
+		}
+		
+		
+		/**
+		 * Sanitize plain text
+		 * @param string $text
+		 * @return string
+		 */
+		private function __sanitizeText($text) {
+			global $wpdb;
+			return $wpdb->escape($text);
+		}
+		
+		/**
+		 * Sanitize url
+		 * @param string $text
+		 * @return string
+		 */
+		private function __sanitizeURL($text) {
+			return esc_url($text);
+		}
+		
+		/**
+		 * Sanitize int
+		 * @param mixed $text
+		 * @return int
+		 */
+		private function __sanitizeInt($text) {
+			return (int)($text);
+		}
+		
+		/**
+		 * Sanitize checkbox
+		 * @param mixed $checked
+		 * @return int
+		 */
+		private function __sanitizeCheckbox($checked) {
+			return ($checked ? 1:0);
+		}
+		
+		/**
+		 * Get page icon
+		 */
+		private function __getIcon() {
+			$class = array("icon32");
+			if (!empty($this->__pageIconClass)) {
+				$class = array_merge($class, $this->__pageIconClass);
+			}
+			$id = ($this->__pageIconId ? $this->__pageIconId:"icon-options-general");
+			?>
+			<div class="<?php echo implode(" ", $class)?>" id="<?php echo $id ?>"><br></div>
+			<?php
+		}
+		
+	
 	}
 	
-	/**
-	 * Output dropdown options. All or for a specific option group. If $optgroup is null, all options will be
-	 * shown. If it's false, only options without group will be shown. If it's set only options of that group
-	 * will be shown.
-	 * @param int $field_index The current fields index
-	 * @param WPSettingsDropDownOptionGroup|null|false $optgroup Optional
-	 */
-	private function __outputDropDownOptions($field_index, $optgroup=null) {
-		foreach ($this->Options AS $option_index => $option) {
-			// Skip if
-			// Trying to get option group only (not null and not false)
-			// And this option isn't part of that option group
-			// Or this option has no option group at all
-			if ( !is_null($optgroup) && $optgroup !== false && ( (!is_null($option->OptionGroup) && $option->OptionGroup->Name !== $optgroup->Name) || (is_null($option->OptionGroup)) ) ) {
-				continue;
-			}
-			// Skip if 
-			// Optgroup is set to false, and this option has a optgroup
-			if ($optgroup === false && !is_null($option->OptionGroup)) {
-				continue;
-			}
-			?>
-			<option value="<? esc_attr_e( $option->Value )?>" id="<?php esc_attr_e( $this->FieldId .'_'.$field_index.'_'.$option_index ) ?>" <?php selected($this->CurrentValue[$field_index], $option->Value) ?>><?php esc_attr_e( $option->Name ) ?></option>
-			<?php
-		}
-	}
+	
 	
 	/**
-	 * Output field - Type "radio"
+	 * WP Settings Sub Page class
+	 * @see WPSettingsPage
 	 */
-	private function __outputRadioField() {
-		foreach ($this->InputName AS $index => $input_name) {
+	class WPSettingsSubPage extends WPSettingsPage {
+	
+		public $Id;
+		
+		protected $Title;
+		protected $Subtitle;
+		protected $MenuSlug;
+		
+		
+		/**
+		 * Create a WP Settings Page
+		 * @todo Allow both menu page and options page?
+		 * @param WPSettingsPage $WPSettingsPage
+		 * @param string $page_title 
+		 * @param string $page_subtitle
+		 * @param string $menu_title
+		 * @param string $capability
+		 * @param string $menu_slug
+		 * @param string|array|bool $function
+		 * @return WPSettingsPage
+		 */
+		public function __construct(WPSettingsPage &$WPSettingsPage, $page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+		
+			$this->Id = $menu_slug;
 			
-			$width = 300;
+			$this->Title = $page_title;
+			$this->Subtitle = $page_subtitle;
+			$this->MenuSlug = $menu_slug;
+	
+			add_submenu_page($WPSettingsPage->MenuSlug, $page_title, $menu_title, $capability, $menu_slug, $function);
 			
-			if ($this->HelpText[$index]) {
-				$width -= 150;
-				?>
-				<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
-				<?php
+			return $this;
+			
+		}
+			
+	}
+	
+	
+	
+	/**
+	 * WP Settings Section class
+	 * @see WPSettings
+	 */
+	class WPSettingsSection extends WPSettings {
+	
+		public $Id;
+		public $SectionId;
+		
+		protected $Headline;
+		protected $Description;
+		protected $Fields = array();
+		
+		/**
+		 * Create a WP Settings Section (called by WPSettingsPage->addSettingsSection()
+		 * @see WPSettingsPage->addSettingsSection
+		 * @param WPSettingsPage $WPSettingsPage
+		 * @param string $section_id
+		 * @param string $headline
+		 * @param string $description Optional
+		 * @return WPSettingsSection
+		 */
+		function __construct(WPSettingsPage &$WPSettingsPage, $section_id, $headline, $description='') {
+			
+			$this->Id = $WPSettingsPage->Id;
+			$this->SectionId = $this->Id."_".$section_id;
+			$this->Headline = $headline;
+			$this->Description = $description;
+	
+			add_settings_section($this->SectionId,
+				$this->Headline,
+				array($this, 'outputDescription'),
+				$this->Id
+			);
+			
+			return $this;
+			
+		}
+		
+		/**
+		 * Output description
+		 */
+		public function outputDescription() {
+			if ($this->Description) {
+				?><p><?php echo $this->Description ?></p><?php
 			}
-			?>
-			<div style="width: 150px; float: left;">
-				<?php
-				foreach ($this->Options AS $option_index => $option) {
+		}
+		
+		/**
+		 * Add a WP Settings Field 
+		 * @param string $field_id
+		 * @param string $headline
+		 * @param string|array $input_name
+		 * @param string|array $current_value
+		 * @param string|array $help_text
+		 * @return WPSettingsField
+		 */
+		public function addField($field_id, $headline, $type, $input_name, $current_value='', $help_text='') {
+			// Create dropdown
+			if ($type == "dropdown") {
+				$field = new WPSettingsFieldDropDown($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
+			}
+			// Create a radio
+			elseIf ($type == "radio") {
+				$field = new WPSettingsFieldRadio($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
+			}
+			// Create any other type
+			else {
+				$field = new WPSettingsField($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
+			}
+			$this->Fields[] = &$field;
+			return $field;
+		}
+	
+	}
+	
+	
+	
+	/**
+	 * WP Settings Field class
+	 * @see WPSettingsSection
+	 */
+	class WPSettingsField extends WPSettingsSection {
+	
+		public $Id;
+		public $SectionId;
+		public $FieldId;
+		
+		protected $Headline;
+		protected $Type;
+		protected $InputName;
+		protected $CurrentValue;
+		protected $HelpText;
+		
+		/**
+		 * Creates a WP Settings Field (called by WPSettingsSection->addField). 
+		 * Possible values for $type is:
+		 * - text (regular text field)
+		 * @see WPSettingsSection->addField
+		 * @param WPSettingsSection $WPSettingsSection
+		 * @param string $field_id
+		 * @param string $headline
+		 * @param string $type 
+		 * @param string|array $input_name
+		 * @param string[array $current_value
+		 * @param string|array $help_text
+		 * @return WPSettingsField
+		 */
+		function __construct(WPSettingsSection &$WPSettingsSection, $field_id, $headline, $type, $input_name, $current_value='', $help_text='') {
+		
+			$this->Id = $WPSettingsSection->Id;
+			$this->SectionId = $WPSettingsSection->SectionId;
+			$this->FieldId = $this->SectionId."_".$field_id;
+			$this->Headline = $headline;
+			$this->Type = $type;
+			// Always store them as array, multiple elements can be added foreach field
+			$this->InputName = (is_array($input_name) ? $input_name:array($input_name));
+			$this->CurrentValue = (is_array($current_value) ? $current_value:array($current_value));
+			$this->HelpText = (is_array($help_text) ? $help_text:array($help_text));
+		
+	 		add_settings_field($this->FieldId,
+				$this->Headline,
+				array($this, 'outputField'),
+				$this->Id,
+				$this->SectionId
+			);
+			
+			return $this;
+			
+		}
+		
+		/**
+		 * Output field (calls private functions by type)
+		 */
+		public function outputField() {
+			switch ($this->Type) {
+				
+				// Drop down
+				case "dropdown":
+					$this->__outputDropDownField();
+				break;
+				// Radio
+				case "radio":
+					$this->__outputRadioField();
+				break;
+				// Checbox
+				case "checkbox":
+					$this->__outputCheckboxField();
+				break;
+				// Int
+				case "int":
+					$this->__outputTextField();
+				break;
+				// URL
+				case "url":
+				// Regular text field
+				case "text":
+				default:
+					$this->__outputTextField();
+				break;
+			
+			}
+		}
+		
+		/**
+		 * Output field - Type "text" (regular text field)
+		 */
+		private function __outputTextField() {
+			foreach ($this->InputName AS $index => $input_name) {
+				
+				$width = 300;
+				
+				if ($this->HelpText[$index]) {
+					$width -= 150;
 					?>
-					<p>
-						<input type="radio" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" value="<? esc_attr_e( $option->Value )?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index.'_'.$option_index ) ?>" <?php checked($this->CurrentValue[$index], $option->Value) ?>> <label for="<?php esc_attr_e( $this->FieldId .'_'.$index.'_'.$option_index ) ?>"><?php esc_attr_e( $option->Name ) ?></label>
-					</p>
+					<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
 					<?php
 				}
 				?>
-			</div>
-			<div style="clear: both;"></div>
-			<?php
-			
+				<div style="width: 150px; float: left;">
+					<input type="text" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr_e( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" />
+				</div>
+				<div style="clear: both;"></div>
+				<?php
+				
+			}
 		}
-	}
 		
-	
-}
-
-
-
-/**
- * WP Settings Field Drop Down class
- * @see WPSettingsField
- */
-class WPSettingsFieldDropDown extends WPSettingsField {
-	
-	public $Options = array();
-	public $OptionGroups = array();
-	
-	/**
-	 * Add an option to the drop down
-	 * @param string|int $value
-	 * @param string $name Optional
-	 * @param WPSettingsDropDownOptionGroup|null $optgroup Optional
-	 * @return WPSettingsDropDownOption
-	 */
-	public function addOption($value, $name='', $optgroup=null) {
-		$name = ($name ? $name:$value);
-		$option = new WPSettingsDropDownOption($value, $name, $optgroup);
-		$this->Options[] = $option;
-		return $option;
+		/**
+		 * Output field - Type "checkbox"
+		 */
+		private function __outputCheckboxField() {
+			foreach ($this->InputName AS $index => $input_name) {
+				
+				$width = 300;
+				
+				if ($this->HelpText[$index]) {
+					$width -= 150;
+					?>
+					<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
+					<?php
+				}
+				?>
+				<div style="width: 150px; float: left;">
+					<input type="checkbox" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> />
+				</div>
+				<div style="clear: both;"></div>
+				<?php
+				
+			}
+		}
+		
+		/**
+		 * Output field - Type "dropdown"
+		 */
+		private function __outputDropDownField() {
+			foreach ($this->InputName AS $index => $input_name) {
+				
+				$width = 300;
+				
+				if ($this->HelpText[$index]) {
+					$width -= 150;
+					?>
+					<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
+					<?php
+				}
+				?>
+				<div style="width: 150px; float: left;">
+					<select name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>">
+						<?php
+						// Loop options through option groups
+						if ($this->OptionGroups) {
+							// First get options with specifically no group (default value most likely)
+							$this->__outputDropDownOptions($index, false);
+							// Then loop through the option groups
+							foreach ($this->OptionGroups AS $optgroup_index => $optgroup) {
+								?>
+								<optgroup label="<?php esc_attr_e( $optgroup->Name )?>">
+									<?php
+									$this->__outputDropDownOptions($index, $optgroup);
+									?>
+								</optgroup>
+								<?php
+							}
+						}
+						// Loop all options without groups
+						else {
+							$this->__outputDropDownOptions($index);
+						} 
+						?>
+					</select>
+				</div>
+				<div style="clear: both;"></div>
+				<?php
+				
+			}
+		}
+		
+		/**
+		 * Output dropdown options. All or for a specific option group. If $optgroup is null, all options will be
+		 * shown. If it's false, only options without group will be shown. If it's set only options of that group
+		 * will be shown.
+		 * @param int $field_index The current fields index
+		 * @param WPSettingsDropDownOptionGroup|null|false $optgroup Optional
+		 */
+		private function __outputDropDownOptions($field_index, $optgroup=null) {
+			foreach ($this->Options AS $option_index => $option) {
+				// Skip if
+				// Trying to get option group only (not null and not false)
+				// And this option isn't part of that option group
+				// Or this option has no option group at all
+				if ( !is_null($optgroup) && $optgroup !== false && ( (!is_null($option->OptionGroup) && $option->OptionGroup->Name !== $optgroup->Name) || (is_null($option->OptionGroup)) ) ) {
+					continue;
+				}
+				// Skip if 
+				// Optgroup is set to false, and this option has a optgroup
+				if ($optgroup === false && !is_null($option->OptionGroup)) {
+					continue;
+				}
+				?>
+				<option value="<? esc_attr_e( $option->Value )?>" id="<?php esc_attr_e( $this->FieldId .'_'.$field_index.'_'.$option_index ) ?>" <?php selected($this->CurrentValue[$field_index], $option->Value) ?>><?php esc_attr_e( $option->Name ) ?></option>
+				<?php
+			}
+		}
+		
+		/**
+		 * Output field - Type "radio"
+		 */
+		private function __outputRadioField() {
+			foreach ($this->InputName AS $index => $input_name) {
+				
+				$width = 300;
+				
+				if ($this->HelpText[$index]) {
+					$width -= 150;
+					?>
+					<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
+					<?php
+				}
+				?>
+				<div style="width: 150px; float: left;">
+					<?php
+					foreach ($this->Options AS $option_index => $option) {
+						?>
+						<p>
+							<input type="radio" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" value="<? esc_attr_e( $option->Value )?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index.'_'.$option_index ) ?>" <?php checked($this->CurrentValue[$index], $option->Value) ?>> <label for="<?php esc_attr_e( $this->FieldId .'_'.$index.'_'.$option_index ) ?>"><?php esc_attr_e( $option->Name ) ?></label>
+						</p>
+						<?php
+					}
+					?>
+				</div>
+				<div style="clear: both;"></div>
+				<?php
+				
+			}
+		}
+			
+		
 	}
 	
-	/**
-	 * Add an option group
-	 * @param string $name
-	 */
-	public function addOptionGroup($name) {
-		$optgroup = new WPSettingsDropDownOptionGroup($name);
-		$this->OptionGroups[] = $optgroup;
-		return $optgroup;
-	}
 	
-}
-
-
-
-/**
- * WP Settings Field Drop Down Option class
- * @see WPSettings
- */
-class WPSettingsDropDownOption extends WPSettings {
-	
-	protected $Value;
-	protected $Name;
-	protected $OptionGroup = null;
 	
 	/**
-	 * Creates a drop down option
-	 * @param string|int $value
-	 * @param string $name
-	 * @param WPSettingsDropDownOptionGroup|null $optgroup Optional option group
-	 * @return WPSettingsDropDownOption
+	 * WP Settings Field Drop Down class
+	 * @see WPSettingsField
 	 */
-	function __construct($value, $name, $optgroup=null) {
-		$this->Value = $value;
-		$this->Name = $name;	
-		$this->OptionGroup = $optgroup;
-		return $this;
+	class WPSettingsFieldDropDown extends WPSettingsField {
+		
+		public $Options = array();
+		public $OptionGroups = array();
+		
+		/**
+		 * Add an option to the drop down
+		 * @param string|int $value
+		 * @param string $name Optional
+		 * @param WPSettingsDropDownOptionGroup|null $optgroup Optional
+		 * @return WPSettingsDropDownOption
+		 */
+		public function addOption($value, $name='', $optgroup=null) {
+			$name = ($name ? $name:$value);
+			$option = new WPSettingsDropDownOption($value, $name, $optgroup);
+			$this->Options[] = $option;
+			return $option;
+		}
+		
+		/**
+		 * Add an option group
+		 * @param string $name
+		 */
+		public function addOptionGroup($name) {
+			$optgroup = new WPSettingsDropDownOptionGroup($name);
+			$this->OptionGroups[] = $optgroup;
+			return $optgroup;
+		}
+		
 	}
 	
-}
-
-
-
-/**
- * WP Settings Field Drop Down Option Group class
- * @see WPSettings
- */
-class WPSettingsDropDownOptionGroup extends WPSettings {
 	
-	protected $Name;
 	
 	/**
-	 * Creates a drop down option group
-	 * @param string|int $value
-	 * @param string $name
-	 * @return WPSettingsDropDownOptionGroup
+	 * WP Settings Field Drop Down Option class
+	 * @see WPSettings
 	 */
-	function __construct($name) {
-		$this->Name = $name;	
-		return $this;
+	class WPSettingsDropDownOption extends WPSettings {
+		
+		protected $Value;
+		protected $Name;
+		protected $OptionGroup = null;
+		
+		/**
+		 * Creates a drop down option
+		 * @param string|int $value
+		 * @param string $name
+		 * @param WPSettingsDropDownOptionGroup|null $optgroup Optional option group
+		 * @return WPSettingsDropDownOption
+		 */
+		function __construct($value, $name, $optgroup=null) {
+			$this->Value = $value;
+			$this->Name = $name;	
+			$this->OptionGroup = $optgroup;
+			return $this;
+		}
+		
 	}
 	
-}
-
-
-
-/**
- * WP Settings Field Radio class
- * @see WPSettingsField
- */
-class WPSettingsFieldRadio extends WPSettingsField {
 	
-	public $Options = array();
 	
 	/**
-	 * Add an option to the drop down
-	 * @param string|int $value
-	 * @param string $name Optional
-	 * @return WPSettingsRadioOption
+	 * WP Settings Field Drop Down Option Group class
+	 * @see WPSettings
 	 */
-	public function addOption($value, $name='') {
-		$name = ($name ? $name:$value);
-		$option = new WPSettingsRadioOption($value, $name);
-		$this->Options[] = $option;
-		return $option;
+	class WPSettingsDropDownOptionGroup extends WPSettings {
+		
+		protected $Name;
+		
+		/**
+		 * Creates a drop down option group
+		 * @param string|int $value
+		 * @param string $name
+		 * @return WPSettingsDropDownOptionGroup
+		 */
+		function __construct($name) {
+			$this->Name = $name;	
+			return $this;
+		}
+		
 	}
 	
-}
-
-
-
-/**
- * WP Settings Field Radio Option class
- * @see WPSettings
- */
-class WPSettingsRadioOption extends WPSettings {
 	
-	protected $Value;
-	protected $Name;
 	
 	/**
-	 * Creates a radio option
-	 * @param string|int $value
-	 * @param string $name
-	 * @return WPSettingsRadioOption
+	 * WP Settings Field Radio class
+	 * @see WPSettingsField
 	 */
-	function __construct($value, $name) {
-		$this->Value = $value;
-		$this->Name = $name;	
-		return $this;
+	class WPSettingsFieldRadio extends WPSettingsField {
+		
+		public $Options = array();
+		
+		/**
+		 * Add an option to the drop down
+		 * @param string|int $value
+		 * @param string $name Optional
+		 * @return WPSettingsRadioOption
+		 */
+		public function addOption($value, $name='') {
+			$name = ($name ? $name:$value);
+			$option = new WPSettingsRadioOption($value, $name);
+			$this->Options[] = $option;
+			return $option;
+		}
+		
 	}
 	
+	
+	
+	/**
+	 * WP Settings Field Radio Option class
+	 * @see WPSettings
+	 */
+	class WPSettingsRadioOption extends WPSettings {
+		
+		protected $Value;
+		protected $Name;
+		
+		/**
+		 * Creates a radio option
+		 * @param string|int $value
+		 * @param string $name
+		 * @return WPSettingsRadioOption
+		 */
+		function __construct($value, $name) {
+			$this->Value = $value;
+			$this->Name = $name;	
+			return $this;
+		}
+		
+	}
+
+
+
 }
-
-
-
-
