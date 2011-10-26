@@ -118,47 +118,6 @@ You can add subpages by calling the function addSubPage() on a WPSettingsPage ob
 		// $wp_settings_sub_page->output();
 	}
 
-### Event listeners
-The event listener functions should receive four parameters. The event const integer, the WPSettingsField-object, the input name and the $input_value. The $input_value can be altered by the event by returning a new value. If nothing is returned, the value won't change.
-	require_once('/path/to/wpsettings.php');
-	
-	add_action('admin_menu', 'my_admin_menu');
-	add_action('admin_init', 'my_admin_init');
-	
-	// This will contain the global WPSettingsPage object
-	global $wp_settings_page;
-	$wp_settings_page = null;
-	
-	function my_admin_menu() {
-		global $wp_settings_page;
-		
-		// Create a settings page
-		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
-	}
-	
-	function my_admin_init() {
-		global $wp_settings_page;
-		
-		// Adds a text input
-		$field = $section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
-		$field->addEventListener(WPSettingsField::EVENT_UPDATE, 'update_text_value');
-		
-		// Activate settings
-		$wp_settings_page->activeteSettings();
-	}
-	
-	function my_admin_page_output() {
-		global $wp_settings_page;
-		
-		$wp_settings_page->output();
-	}
-	
-	function update_text_value($event, $field_object, $input_name, $input_value) {
-		// Do stuff or things...
-		// Optional, return altered input value
-		return $input_value;
-	}
-
 
 Field types
 ------------
@@ -171,13 +130,6 @@ These are the types that can be used in addField() (the third parameter)
 * "checkbox" - A checkbox, sanitizes to save 1 or 0
 * "dropdown" - A select type dropdown. Sanitizes with standard $wpdb->escape()
 * "radio" - A set of radio options. Sanitizes with the standard $wpdb->escape()
-
-
-Events
-------------	
-These events are available in WPSettingsField
-	
-* EVENT_UPDATE - Runs after sanitize, before value is stored in DB
 
 
 Requirements
@@ -196,10 +148,7 @@ Todos
 		
 Version history
 ------------
-
-* 1.6
- * Added event listener to WPSettingsField.
- * Added event EVENT_UPDATE, it is called after sanitation but before the data is stored.	
+	
 * 1.5.2
  * Wrap eeeverything within a class_exists() check to make sure the code isn't included twice through different files, and by that causes trouble.
 * 1.5.1

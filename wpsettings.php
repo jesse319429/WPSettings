@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6
+ * @version 1.5.2
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -138,52 +138,6 @@
 	}
 	----------------------------------
 	
-	Event listeners:
-	The event listener functions should receive four parameters. The event const integer, 
-	the WPSettingsField-object, the input name and the $input_value. The $input_value can
-	be altered by the event by returning a new value. If nothing is returned, the value
-	won't change.
-	----------------------------------
-	require_once('/path/to/wpsettings.php');
-	
-	add_action('admin_menu', 'my_admin_menu');
-	add_action('admin_init', 'my_admin_init');
-	
-	// This will contain the global WPSettingsPage object
-	global $wp_settings_page;
-	$wp_settings_page = null;
-	
-	function my_admin_menu() {
-		global $wp_settings_page;
-		
-		// Create a settings page
-		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
-	}
-	
-	function my_admin_init() {
-		global $wp_settings_page;
-		
-		// Adds a text input
-		$field = $section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
-		$field->addEventListener(WPSettingsField::EVENT_UPDATE, 'update_text_value');
-		
-		// Activate settings
-		$wp_settings_page->activeteSettings();
-	}
-	
-	function my_admin_page_output() {
-		global $wp_settings_page;
-		
-		$wp_settings_page->output();
-	}
-	
-	function update_text_value($event, $field_object, $input_name, $input_value) {
-		// Do stuff or things...
-		// Optional, return altered input value
-		return $input_value;
-	}
-	----------------------------------
-	
 	
 	
 	FIELD TYPES
@@ -202,15 +156,6 @@
 		A select type dropdown. Sanitizes with standard $wpdb->escape()
 	"radio"
 		A set of radio options. Sanitizes with the standard $wpdb->escape()
-		
-		
-		
-	EVENTS
-	
-	These events are available in WPSettingsField
-	
-	EVENT_UPDATE
-		Runs after sanitize, before value is stored in DB
 	
 	
 	
@@ -225,15 +170,11 @@
 	
 	1) Add more types :)
 	2) Add html5 style input boxes (as well as some setting to create html or xhtml type inputs)
-	3) Add more events?
 		
 		
 	
 	VERSION HISTORY
 	
-	1.6
-		Added event listener to WPSettingsField.
-		Added event EVENT_UPDATE, it is called after sanitation but before the data is stored. 
 	1.5.2
 		Wrap eeeverything within a class_exists() check to make sure the code isn't included twice through
 		different files, and by that causes trouble.
@@ -532,8 +473,6 @@ if (!class_exists('WPSettings')) {
 								$new_input[$name] = $this->__sanitizeText($input[$name]);
 							break;
 						}
-						// Call events
-						$this->__callEvents($field, WPSettingsField::EVENT_UPDATE, $name, $new_input[$name]);
 					}
 				}
 			}
@@ -564,25 +503,6 @@ if (!class_exists('WPSettings')) {
 		public function setIcon($icon_id, $add_classes=array()) {
 			$this->__pageIconId = $icon_id;
 			$this->__pageIconClass = $add_classes;
-		}
-		
-		
-		/**
-		 * Call events - Is called once per value in a field
-		 * @param object $field
-		 * @param int $event Must be one of the EVENT_ constants of this class
-		 * @param mixed $input_name The current input name
-		 * @param mixed $input_value The current value for the input
-		 */
-		private function __callEvents($field, $event, $input_name, &$input_value) {
-			if (!empty($field->Events[$event])) {
-				foreach ($field->Events[$event] AS $index => $callback) {
-					$new_input_value = call_user_func($callback, $event, $field, $input_name, $input_value);
-					if (!empty($new_input_value)) {
-						$input_value = $new_input_value;
-					}
-				}
-			}
 		}
 		
 		
@@ -778,9 +698,6 @@ if (!class_exists('WPSettings')) {
 		protected $InputName;
 		protected $CurrentValue;
 		protected $HelpText;
-		protected $Events = array();
-		
-		const EVENT_UPDATE = 1;
 		
 		/**
 		 * Creates a WP Settings Field (called by WPSettingsSection->addField). 
@@ -849,44 +766,6 @@ if (!class_exists('WPSettings')) {
 					$this->__outputTextField();
 				break;
 			
-			}
-		}
-		
-		/**
-		 * Add event listener to this field.
-		 * @param int $event Must be one of the EVENT_ constants of this class
-		 * @param string|array $callback A function to call on the event
-		 * @return bool Returns true or false if the event listener was added 
-		 */
-		public function addEventListener($event, $callback) {
-			// Make sure class and metod exists if array
-			if (is_array($callback)) {
-				if (is_string($callback[0]) && !class_exists($callback[0], true)) {
-					return false;
-				}
-				if (!method_exists($callback[0], $callback[1])) {
-					return false;
-				}
-			}
-			
-			// Make sure function exists if string
-			if (is_string($callback)) {
-				if (!function_exists($callback)) {
-					return false;
-				}
-			}
-			
-			// Add event
-			switch ($event) {
-				case self::EVENT_UPDATE:
-					if (!isset($this->Events[self::EVENT_UPDATE]) || !is_array($this->Events[self::EVENT_UPDATE])) {
-						$this->Events[self::EVENT_UPDATE] = array();
-					}
-					$this->Events[self::EVENT_UPDATE][] = $callback;
-				break;
-				default:
-					return false;
-				break;
 			}
 		}
 		
