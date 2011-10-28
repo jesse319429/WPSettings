@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.5.2
+ * @version 1.6
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -81,7 +81,7 @@
 		$radio->addOption('mar', 'March');
 		
 		// Activate settings
-		$wp_settings_page->activeteSettings();
+		$wp_settings_page->activateSettings();
 	}
 	
 	function my_admin_page_output() {
@@ -138,6 +138,53 @@
 	}
 	----------------------------------
 	
+	Filters:
+	Through WPSettingsField->addFilter() you can add filters that uses the built in WP filtes api. Send in which type of filter
+	you want to use, which must be one of the WPSettingsField::FILTER_ constants, the callback function and a priority integer.
+	----------------------------------
+	require_once('/path/to/wpsettings.php');
+	
+	add_action('admin_menu', 'my_admin_menu');
+	add_action('admin_init', 'my_admin_init');
+	
+	// This will contain the global WPSettingsPage object
+	global $wp_settings_page;
+	$wp_settings_page = null;
+	
+	function my_admin_menu() {
+		global $wp_settings_page;
+		
+		// Create a settings page
+		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
+	}
+	
+	function my_admin_init() {
+		global $wp_settings_page;
+		
+		// Adds a text input
+		$field = $section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
+		// Add a filter for when the text input is updated (1 is it's priority)
+		// The filters are called using WP built in filter API
+		$field->addFilter(WPSettingsField::FILTER_UPDATE, 'update_text_value', 1);
+		
+		// Activate settings
+		$wp_settings_page->activateSettings();
+	}
+	
+	function my_admin_page_output() {
+		global $wp_settings_page;
+		
+		$wp_settings_page->output();
+	}
+	
+	function update_text_value($field_obj, $input_value) {
+		// Do stuff or things...
+		// Optional, return altered input value.
+		// Return null to leave it as it is
+		return $input_value;
+	}
+	----------------------------------
+	
 	
 	
 	FIELD TYPES
@@ -156,6 +203,21 @@
 		A select type dropdown. Sanitizes with standard $wpdb->escape()
 	"radio"
 		A set of radio options. Sanitizes with the standard $wpdb->escape()
+		
+		
+		
+	FILTERS
+	
+	These filters are available
+	
+	FILTER_UPDATE
+		Parameters: 2 
+		Parameter 1: WPSettingsField object
+		Parameter 2: Input value
+		Runs after sanitize, before value is stored in DB. The $field_id is the first parameter sent into addField(). This
+		parameter must be 1 to 50 characters, a-z (case insensitive), 0-9 or "-" and "_".
+		Note that this filter runs on all inputs in that field. If you send in multiple fields in an array (like in the
+		example "Adds three checkboxes") the same filter will run on all.
 	
 	
 	
@@ -170,11 +232,20 @@
 	
 	1) Add more types :)
 	2) Add html5 style input boxes (as well as some setting to create html or xhtml type inputs)
+	3) Add more events?
 		
 		
 	
 	VERSION HISTORY
 	
+	1.6
+		Added validations of the id and field id in addSettingsSection() and addField(). These ids must be 1 to 50
+		characters, a-z (case insensitive), 0-9 or "-" and "_". The functions will throw an exception if the id
+		fails the validation. 
+		Added filters function (see how to).
+		Added filter FILTER_UPDATE.
+		Had misspelled activateSettings() as activeteSettings() ... Since start. :-| Both works now. Misspelled is
+		deprecated and might be removed in future releases.
 	1.5.2
 		Wrap eeeverything within a class_exists() check to make sure the code isn't included twice through
 		different files, and by that causes trouble.
@@ -352,7 +423,7 @@ if (!class_exists('WPSettings')) {
 		 * Activate settings. Is required to be run after all sections and fields has been added to register the settings so that
 		 * WordPress saves the data
 		 */
-		public function activeteSettings() {
+		public function activateSettings() {
 	
 			// Start looping through all pages
 			$pages = array_merge(array($this), $this->__subpages);
@@ -384,6 +455,15 @@ if (!class_exists('WPSettings')) {
 				}
 			}
 			
+		}
+		
+		/**
+		 * Had misspelled activate as activete from beta to 1.5.2... :-|
+		 * @deprecated
+		 * @see WPSettingsPage::activateSettings()
+		 */
+		public function activeteSettings() {
+			$this->activateSettings();
 		}
 		
 		
@@ -473,6 +553,11 @@ if (!class_exists('WPSettings')) {
 								$new_input[$name] = $this->__sanitizeText($input[$name]);
 							break;
 						}
+						// Do filter
+						$return_value = apply_filters('oagml_'.WPSettingsField::FILTER_UPDATE.'_'.$field->FieldId, $field, $new_input[$name]);
+						if (!is_null($return_value)) {
+							$new_input[$name] = $return_value;
+						}
 					}
 				}
 			}
@@ -487,8 +572,12 @@ if (!class_exists('WPSettings')) {
 		 * @param string $headline
 		 * @param string $description Optional
 		 * @returns WPSettingsSection
+		 * @throws Exception
 		 */
 		public function addSettingsSection($id, $headline, $description='') {
+			if (!preg_match("/^[a-z0-9\-\_]{1,50}$/i", $id)) {
+				throw new Exception("Section id failed to validate");
+			}
 			$section = new WPSettingsSection($this, $id, $headline, $description);	
 			$this->Sections[] = &$section;
 			return $section;
@@ -661,8 +750,13 @@ if (!class_exists('WPSettings')) {
 		 * @param string|array $current_value
 		 * @param string|array $help_text
 		 * @return WPSettingsField
+		 * @throws Exception
 		 */
 		public function addField($field_id, $headline, $type, $input_name, $current_value='', $help_text='') {
+			// Validate id
+			if (!preg_match("/^[a-z0-9\-\_]{1,50}$/i", $field_id)) {
+				throw new Exception("Section id failed to validate");
+			}
 			// Create dropdown
 			if ($type == "dropdown") {
 				$field = new WPSettingsFieldDropDown($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
@@ -698,6 +792,13 @@ if (!class_exists('WPSettings')) {
 		protected $InputName;
 		protected $CurrentValue;
 		protected $HelpText;
+		protected $Events = array();
+		
+		const FILTER_UPDATE = "upd";
+		
+		private $__filterParameters = array(
+			'upd' => 2
+		);
 		
 		/**
 		 * Creates a WP Settings Field (called by WPSettingsSection->addField). 
@@ -770,6 +871,34 @@ if (!class_exists('WPSettings')) {
 		}
 		
 		/**
+		 * Add filter to this field
+		 * @param int $event Must be one of the FILTER_ constants of this class
+		 * @param string|array $callback A function to call on the event
+		 * @param int $priority Forwarded into the add_filter() function
+		 */
+		public function addFilter($filter, $callback, $priority=10) {
+			// Make sure class and metod exists if array
+			if (is_array($callback)) {
+				if (is_string($callback[0]) && !class_exists($callback[0], true)) {
+					return false;
+				}
+				if (!method_exists($callback[0], $callback[1])) {
+					return false;
+				}
+			}
+			
+			// Make sure function exists if string
+			if (is_string($callback)) {
+				if (!function_exists($callback)) {
+					return false;
+				}
+			}
+			
+			// Add filter
+			add_filter('oagml_'.$filter.'_'.$this->FieldId, $callback, $priority, $this->__filterParameters[$filter]);
+		}
+		
+		/**
 		 * Output field - Type "text" (regular text field)
 		 */
 		private function __outputTextField() {
@@ -777,7 +906,7 @@ if (!class_exists('WPSettings')) {
 				
 				$width = 300;
 				
-				if ($this->HelpText[$index]) {
+				if (isset($this->HelpText[$index]) && $this->HelpText[$index]) {
 					$width -= 150;
 					?>
 					<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
@@ -801,7 +930,7 @@ if (!class_exists('WPSettings')) {
 				
 				$width = 300;
 				
-				if ($this->HelpText[$index]) {
+				if (isset($this->HelpText[$index]) && $this->HelpText[$index]) {
 					$width -= 150;
 					?>
 					<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
@@ -825,7 +954,7 @@ if (!class_exists('WPSettings')) {
 				
 				$width = 300;
 				
-				if ($this->HelpText[$index]) {
+				if (isset($this->HelpText[$index]) && $this->HelpText[$index]) {
 					$width -= 150;
 					?>
 					<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
@@ -898,7 +1027,7 @@ if (!class_exists('WPSettings')) {
 				
 				$width = 300;
 				
-				if ($this->HelpText[$index]) {
+				if (isset($this->HelpText[$index]) && $this->HelpText[$index]) {
 					$width -= 150;
 					?>
 					<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>

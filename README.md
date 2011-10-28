@@ -66,7 +66,7 @@ How to
 		$radio->addOption('mar', 'March');
 		
 		// Activate settings
-		$wp_settings_page->activeteSettings();
+		$wp_settings_page-> activateSettings();
 	}
 	
 	function my_admin_page_output() {
@@ -118,6 +118,50 @@ You can add subpages by calling the function addSubPage() on a WPSettingsPage ob
 		// $wp_settings_sub_page->output();
 	}
 
+### Filters
+Through WPSettingsField->addFilter() you can add filters that uses the built in WP filtes api. Send in which type of filter you want to use, which must be one of the WPSettingsField::FILTER_ constants, the callback function and a priority integer.
+	require_once('/path/to/wpsettings.php');
+	
+	add_action('admin_menu', 'my_admin_menu');
+	add_action('admin_init', 'my_admin_init');
+	
+	// This will contain the global WPSettingsPage object
+	global $wp_settings_page;
+	$wp_settings_page = null;
+	
+	function my_admin_menu() {
+		global $wp_settings_page;
+		
+		// Create a settings page
+		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
+	}
+	
+	function my_admin_init() {
+		global $wp_settings_page;
+		
+		// Adds a text input
+		$field = $section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
+		// Add a filter for when the text input is updated (1 is it's priority)
+		// The filters are called using WP built in filter API
+		$field->addFilter(WPSettingsField::FILTER_UPDATE, 'update_text_value', 1);
+		
+		// Activate settings
+		$wp_settings_page->activateSettings();
+	}
+	
+	function my_admin_page_output() {
+		global $wp_settings_page;
+		
+		$wp_settings_page->output();
+	}
+	
+	function update_text_value($field_obj, $input_value) {
+		// Do stuff or things...
+		// Optional, return altered input value.
+		// Return null to leave it as it is
+		return $input_value;
+	}
+
 
 Field types
 ------------
@@ -130,6 +174,18 @@ These are the types that can be used in addField() (the third parameter)
 * "checkbox" - A checkbox, sanitizes to save 1 or 0
 * "dropdown" - A select type dropdown. Sanitizes with standard $wpdb->escape()
 * "radio" - A set of radio options. Sanitizes with the standard $wpdb->escape()
+
+
+Filters
+------------
+	
+These filters are available
+	
+* FILTER_UPDATE
+ * Parameters: 2 
+ * Parameter 1: WPSettingsField object
+ * Parameter 2: Input value
+ * Runs after sanitize, before value is stored in DB. The $field_id is the first parameter sent into addField(). This parameter must be 1 to 50 characters, a-z (case insensitive), 0-9 or "-" and "_". Note that this filter runs on all inputs in that field. If you send in multiple fields in an array (like in the example "Adds three checkboxes") the same filter will run on all.
 
 
 Requirements
@@ -149,6 +205,11 @@ Todos
 Version history
 ------------
 	
+* 1.6
+ * Added validations of the id and field id in addSettingsSection() and addField(). These ids must be 1 to 50 characters, a-z (case insensitive), 0-9 or "-" and "_". The functions will throw an exception if the id fails the validation. 
+ * Added filters function (see how to).
+ * Added filter FILTER_UPDATE.
+ * Had misspelled activateSettings() as activeteSettings() ... Since start. :-| Both works now. Misspelled is deprecated and might be removed in future releases.
 * 1.5.2
  * Wrap eeeverything within a class_exists() check to make sure the code isn't included twice through different files, and by that causes trouble.
 * 1.5.1
