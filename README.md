@@ -138,6 +138,9 @@ Through WPSettingsField->addFilter() you can add filters that uses the built in 
 	
 	function my_admin_init() {
 		global $wp_settings_page;
+
+		// Adds a config section
+		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
 		
 		// Adds a text input
 		$field = $section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
@@ -160,6 +163,52 @@ Through WPSettingsField->addFilter() you can add filters that uses the built in 
 		// Optional, return altered input value.
 		// Return null to leave it as it is
 		return $input_value;
+	}
+
+### Output Sections
+Output sections can be used to output custom HTML in the end of a settings page. Each output section is a callback function that will be called after the settings sections in the order they where added. If you want to input custom form elements, you need to store them by your self using the "wps_before_update" action.
+	require_once('/path/to/wpsettings.php');
+	
+	add_action('admin_menu', 'my_admin_menu');
+	add_action('admin_init', 'my_admin_init');
+	
+	// This will contain the global WPSettingsPage object
+	global $wp_settings_page;
+	$wp_settings_page = null;
+	
+	function my_admin_menu() {
+		global $wp_settings_page;
+		
+		// Create a settings page
+		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
+	}
+	
+	function my_admin_init() {
+		global $wp_settings_page;
+		
+		// Adds a config section
+		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
+		
+		// Adds a text input
+		$field = $section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
+		
+		// Adds custom html in a output sections
+		$section = $wp_settings_page->addOutputSection('html_section', 'output_my_html_section', 'Optional Headline');
+		
+		// Activate settings
+		$wp_settings_page->activateSettings();
+	}
+	
+	function my_admin_page_output() {
+		global $wp_settings_page;
+		
+		$wp_settings_page->output();
+	}
+	
+	function output_my_html_section() {
+		?>
+		<p>Some custom HTML here...</p>
+		<?php
 	}
 
 
@@ -188,6 +237,16 @@ These filters are available
  * Runs after sanitize, before value is stored in DB. The $field_id is the first parameter sent into addField(). This parameter must be 1 to 50 characters, a-z (case insensitive), 0-9 or "-" and "_". Note that this filter runs on all inputs in that field. If you send in multiple fields in an array (like in the example "Adds three checkboxes") the same filter will run on all.
 
 
+Actions
+------------
+	
+These are the custom actions that are thrown by WPSettings which can be used to hook in custom features.
+	
+* wps_before_update
+ * Parameters: 0
+ * Called after validation. Before update.
+
+
 Requirements
 ------------
 	
@@ -200,11 +259,17 @@ Todos
 	
 1. Add more types :)
 2. Add html5 style input boxes (as well as some setting to create html or xhtml type inputs)
+3. Add more filters and actions
 		
 		
 Version history
 ------------
 	
+* 1.6.1
+ * Added Output Sections (see how to).
+ * Fixed a small error in the how to examples.
+ * Added action "wps_before_update".
+ * Bug fix on FILTER_UPDATE.
 * 1.6
  * Added validations of the id and field id in addSettingsSection() and addField(). These ids must be 1 to 50 characters, a-z (case insensitive), 0-9 or "-" and "_". The functions will throw an exception if the id fails the validation. 
  * Added filters function (see how to).

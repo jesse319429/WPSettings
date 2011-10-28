@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6
+ * @version 1.6.1
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -161,6 +161,9 @@
 	function my_admin_init() {
 		global $wp_settings_page;
 		
+		// Adds a config section
+		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
+		
 		// Adds a text input
 		$field = $section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
 		// Add a filter for when the text input is updated (1 is it's priority)
@@ -182,6 +185,56 @@
 		// Optional, return altered input value.
 		// Return null to leave it as it is
 		return $input_value;
+	}
+	----------------------------------
+	
+	Output Sections:
+	Output sections can be used to output custom HTML in the end of a settings page. Each output section is a callback function
+	that will be called after the settings sections in the order they where added. If you want to input custom form elements, you
+	need to store them by your self using the "wps_before_update" action.
+	----------------------------------
+	require_once('/path/to/wpsettings.php');
+	
+	add_action('admin_menu', 'my_admin_menu');
+	add_action('admin_init', 'my_admin_init');
+	
+	// This will contain the global WPSettingsPage object
+	global $wp_settings_page;
+	$wp_settings_page = null;
+	
+	function my_admin_menu() {
+		global $wp_settings_page;
+		
+		// Create a settings page
+		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
+	}
+	
+	function my_admin_init() {
+		global $wp_settings_page;
+		
+		// Adds a config section
+		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
+		
+		// Adds a text input
+		$field = $section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
+		
+		// Adds custom html in a output sections
+		$section = $wp_settings_page->addOutputSection('html_section', 'output_my_html_section', 'Optional Headline');
+		
+		// Activate settings
+		$wp_settings_page->activateSettings();
+	}
+	
+	function my_admin_page_output() {
+		global $wp_settings_page;
+		
+		$wp_settings_page->output();
+	}
+	
+	function output_my_html_section() {
+		?>
+		<p>Some custom HTML here...</p>
+		<?php
 	}
 	----------------------------------
 	
@@ -218,6 +271,16 @@
 		parameter must be 1 to 50 characters, a-z (case insensitive), 0-9 or "-" and "_".
 		Note that this filter runs on all inputs in that field. If you send in multiple fields in an array (like in the
 		example "Adds three checkboxes") the same filter will run on all.
+		
+		
+		
+	ACTIONS
+	
+	These are the custom actions that are thrown by WPSettings which can be used to hook in custom features.
+	
+	wps_before_update
+		Parameters: 0
+		Called after validation. Before update.
 	
 	
 	
@@ -232,12 +295,17 @@
 	
 	1) Add more types :)
 	2) Add html5 style input boxes (as well as some setting to create html or xhtml type inputs)
-	3) Add more events?
+	3) Add more filters and actions
 		
 		
 	
 	VERSION HISTORY
 	
+	1.6.1
+		Added Output Sections (see how to).
+		Fixed a small error in the how to examples.
+		Added action "wps_before_update".
+		Bug fix on FILTER_UPDATE.
 	1.6
 		Added validations of the id and field id in addSettingsSection() and addField(). These ids must be 1 to 50
 		characters, a-z (case insensitive), 0-9 or "-" and "_". The functions will throw an exception if the id
@@ -363,6 +431,7 @@ if (!class_exists('WPSettings')) {
 		protected $Subtitle;
 		protected $SettingsPageDescription;
 		protected $Sections = array();
+		protected $OutputSections = array();
 		protected $MenuSlug;
 		
 		private $__subpages = array();
@@ -473,7 +542,7 @@ if (!class_exists('WPSettings')) {
 		 */
 		public function output($subpage='') {
 			// Output a subpage (call that objects output() function)
-			if ($subpage && is_object($this->__subpages[$subpage])) {
+			if ($subpage && isset($this->__subpages[$subpage]) && is_object($this->__subpages[$subpage])) {
 				$this->__subpages[$subpage]->output();
 			}
 			// Output this object page
@@ -502,6 +571,18 @@ if (!class_exists('WPSettings')) {
 					<form action="options.php" method="post">
 					<?php settings_fields($this->Id); ?>
 					<?php do_settings_sections($this->Id); ?>
+					<?php
+					if (count($this->OutputSections) > 0) {
+						foreach ($this->OutputSections AS $index => $section) {
+							if (!empty($section['headline'])) {
+								?>
+								<h3><?php echo $section['headline'] ?></h3>
+								<?php
+							}
+							call_user_func($section['callback']);
+						}
+					}
+					?>
 					<p class="submit">
 						<input name="Submit" type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes'); ?>" />
 					</p>
@@ -554,13 +635,18 @@ if (!class_exists('WPSettings')) {
 							break;
 						}
 						// Do filter
-						$return_value = apply_filters('oagml_'.WPSettingsField::FILTER_UPDATE.'_'.$field->FieldId, $field, $new_input[$name]);
-						if (!is_null($return_value)) {
-							$new_input[$name] = $return_value;
+						if ( has_filter('wps_'.WPSettingsField::FILTER_UPDATE.'_'.$field->FieldId) ) {
+							$return_value = apply_filters('wps_'.WPSettingsField::FILTER_UPDATE.'_'.$field->FieldId, $field, $new_input[$name]);
+							if (!is_null($return_value)) {
+								$new_input[$name] = $return_value;
+							}
 						}
 					}
 				}
 			}
+			
+			// Do update action
+			do_action('wps_before_update');
 			
 			return $new_input;
 		}
@@ -571,7 +657,7 @@ if (!class_exists('WPSettings')) {
 		 * @param string $id
 		 * @param string $headline
 		 * @param string $description Optional
-		 * @returns WPSettingsSection
+		 * @return WPSettingsSection
 		 * @throws Exception
 		 */
 		public function addSettingsSection($id, $headline, $description='') {
@@ -581,6 +667,42 @@ if (!class_exists('WPSettings')) {
 			$section = new WPSettingsSection($this, $id, $headline, $description);	
 			$this->Sections[] = &$section;
 			return $section;
+		}
+		
+		
+		/**
+		 * Add output section
+		 * @param string $id
+		 * @param mixed $callback
+		 * @param string $headline Optional
+		 * @return bool
+		 * @throws Exception
+		 */
+		public function addOutputSection($id, $callback, $headline='') {
+			// Validate id
+			if (!preg_match("/^[a-z0-9\-\_]{1,50}$/i", $id)) {
+				throw new Exception("Section id failed to validate");
+			}
+			
+			// Make sure class and metod exists if array
+			if (is_array($callback)) {
+				if (is_string($callback[0]) && !class_exists($callback[0], true)) {
+					return false;
+				}
+				if (!method_exists($callback[0], $callback[1])) {
+					return false;
+				}
+			}
+			
+			// Make sure function exists if string
+			if (is_string($callback)) {
+				if (!function_exists($callback)) {
+					return false;
+				}
+			}
+			
+			// Store output section
+			$this->OutputSections[] = array('callback' => $callback, 'headline' => $headline);
 		}
 		
 		
@@ -895,7 +1017,7 @@ if (!class_exists('WPSettings')) {
 			}
 			
 			// Add filter
-			add_filter('oagml_'.$filter.'_'.$this->FieldId, $callback, $priority, $this->__filterParameters[$filter]);
+			add_filter('wps_'.$filter.'_'.$this->FieldId, $callback, $priority, $this->__filterParameters[$filter]);
 		}
 		
 		/**
