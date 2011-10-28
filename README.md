@@ -167,6 +167,7 @@ Through WPSettingsField->addFilter() you can add filters that uses the built in 
 
 ### Output Sections
 Output sections can be used to output custom HTML in the end of a settings page. Each output section is a callback function that will be called after the settings sections in the order they where added. If you want to input custom form elements, you need to store them by your self using the "wps_before_update" action.
+
 	require_once('/path/to/wpsettings.php');
 	
 	add_action('admin_menu', 'my_admin_menu');
