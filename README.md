@@ -13,6 +13,7 @@ How to
 ------------
 
 ### A simple example
+
 	require_once('/path/to/wpsettings.php');
 
 	add_action('admin_menu', 'my_admin_menu');
@@ -77,6 +78,7 @@ How to
 
 ### Subpages
 You can add subpages by calling the function addSubPage() on a WPSettingsPage object. All the regular WPSettings features works on a sub page. The sub page is put as a sub menu page link in the WP menu.
+
 	require_once('/path/to/wpsettings.php');
 	
 	add_action('admin_menu', 'my_admin_menu');
@@ -120,6 +122,7 @@ You can add subpages by calling the function addSubPage() on a WPSettingsPage ob
 
 ### Filters
 Through WPSettingsField->addFilter() you can add filters that uses the built in WP filtes api. Send in which type of filter you want to use, which must be one of the WPSettingsField::FILTER_ constants, the callback function and a priority integer.
+
 	require_once('/path/to/wpsettings.php');
 	
 	add_action('admin_menu', 'my_admin_menu');
