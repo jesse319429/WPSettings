@@ -269,6 +269,8 @@ Todos
 Version history
 ------------
 	
+* 1.6.2
+ * WPSettings now make sure a constant exists called WP_SETTINGS_VERSION. This will contain the version number of the current loaded WPSettings. If two versions are loaded. The first loaded version number will be in the const. If WPSettings is loaded, but no WP_SETTINGS_VERSION is found, it is set as 1.0. With this you can make sure that the latest is loaded, and output an error message if it's not. If multiple WPSettings are loaded it can still cause some problem, since you need to make sure that the first one loaded is the version you need. Not sure how to fix that. Now you can see which version is loaded anyway. :)
 * 1.6.1
  * Added Output Sections (see how to).
  * Fixed a small error in the how to examples.

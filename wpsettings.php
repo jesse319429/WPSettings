@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6.1
+ * @version 1.6.2
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -301,6 +301,13 @@
 	
 	VERSION HISTORY
 	
+	1.6.2
+		WPSettings now make sure a constant exists called WP_SETTINGS_VERSION. This will contain the version number
+		of the current loaded WPSettings. If two versions are loaded. The first loaded version number will be in the
+		const. If WPSettings is loaded, but no WP_SETTINGS_VERSION is found, it is set as 1.0. With this you can 
+		make sure that the latest is loaded, and output an error message if it's not. If multiple WPSettings are
+		loaded it can still cause some problem, since you need to make sure that the first one loaded is the version
+		you need. Not sure how to fix that. Now you can see which version is loaded anyway. :)
 	1.6.1
 		Added Output Sections (see how to).
 		Fixed a small error in the how to examples.
@@ -380,6 +387,8 @@ if (!class_exists('WPSettings')) {
 	 * WP Settings base class - Extended by WPSettingsPage, WPSettingsSection and WPSettingsField
 	 */
 	class WPSettings {
+		
+		const VERSION = "1.6.2";
 	
 		/**
 		 * Magic get function, gets method first if exists, or property
@@ -1314,6 +1323,25 @@ if (!class_exists('WPSettings')) {
 		
 	}
 
-
-
+	
 }
+
+
+
+// WPSettings already exists.
+else {
+	// WPSettings already exists, but WPSettingsVersion isn't defined. Can't know which version
+	// is loaded so define as version 1.0
+	if (!defined('WP_SETTINGS_VERSION')) {
+		define('WP_SETTINGS_VERSION', '1.0');
+	}
+}
+
+
+
+// Make sure a define exist with current version
+if (!defined('WP_SETTINGS_VERSION')) {
+	define('WP_SETTINGS_VERSION', WPSettings::VERSION);
+}
+
+
