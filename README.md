@@ -270,6 +270,8 @@ Todos
 Version history
 ------------
 	
+* 1.6.4
+ * Changed some faulty uses of esc_attr_e() to esc_attr()
 * 1.6.3
  * New type: "hex_color".
 * 1.6.2
