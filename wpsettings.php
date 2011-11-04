@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6.2
+ * @version 1.6.3
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -256,6 +256,8 @@
 		A select type dropdown. Sanitizes with standard $wpdb->escape()
 	"radio"
 		A set of radio options. Sanitizes with the standard $wpdb->escape()
+	"hex_color"
+		A HTML hex color value. Sanitize with allowed hex valued colors.
 		
 		
 		
@@ -301,6 +303,8 @@
 	
 	VERSION HISTORY
 	
+	1.6.3
+		New type: "hex_color"
 	1.6.2
 		WPSettings now make sure a constant exists called WP_SETTINGS_VERSION. This will contain the version number
 		of the current loaded WPSettings. If two versions are loaded. The first loaded version number will be in the
@@ -593,7 +597,7 @@ if (!class_exists('WPSettings')) {
 					}
 					?>
 					<p class="submit">
-						<input name="Submit" type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes'); ?>" />
+						<input name="Submit" type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes'); ?>" >
 					</p>
 					</form>
 				<?php endif; ?>
@@ -635,6 +639,9 @@ if (!class_exists('WPSettings')) {
 							break;
 							case "url":
 								$new_input[$name] = $this->__sanitizeURL($input[$name]);
+							break;
+							case "hex_color":
+								$new_input[$name] = $this->__sanitizeHexColor($input[$name]);
 							break;
 							case "dropdown":
 							case "radio":
@@ -743,6 +750,20 @@ if (!class_exists('WPSettings')) {
 		 */
 		private function __sanitizeURL($text) {
 			return esc_url($text);
+		}
+		
+		/**
+		 * Sanitize hex color
+		 * @param string $text
+		 */
+		private function __sanitizeHexColor($text) {
+			$text = str_replace("#", "", $text);
+			if (preg_match('/^[a-f0-9]{6}$/i', $text)) {
+				return $text;
+			}
+			else {
+				return "";
+			}
 		}
 		
 		/**
@@ -990,6 +1011,10 @@ if (!class_exists('WPSettings')) {
 				case "int":
 					$this->__outputTextField();
 				break;
+				// Hex color
+				case "hex_color":
+					$this->__outputHexColorField();
+				break;
 				// URL
 				case "url":
 				// Regular text field
@@ -1045,7 +1070,30 @@ if (!class_exists('WPSettings')) {
 				}
 				?>
 				<div style="width: 150px; float: left;">
-					<input type="text" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr_e( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" />
+					<input type="text" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr_e( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" >
+				</div>
+				<div style="clear: both;"></div>
+				<?php
+				
+			}
+		}
+		
+		/**
+		 * Output field - Type "hex_color"
+		 */
+		private function __outputHexColorField() {
+			foreach ($this->InputName AS $index => $input_name) {
+				
+				$width = 60;
+				
+				if (isset($this->HelpText[$index]) && $this->HelpText[$index]) {
+					?>
+					<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
+					<?php
+				}
+				?>
+				<div style="width: 150px; float: left;">
+					# <input type="text" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr_e( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" >
 				</div>
 				<div style="clear: both;"></div>
 				<?php
@@ -1069,7 +1117,7 @@ if (!class_exists('WPSettings')) {
 				}
 				?>
 				<div style="width: 150px; float: left;">
-					<input type="checkbox" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> />
+					<input type="checkbox" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> >
 				</div>
 				<div style="clear: both;"></div>
 				<?php
