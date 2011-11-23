@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6.4
+ * @version 1.6.3
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -303,8 +303,6 @@
 	
 	VERSION HISTORY
 	
-	1.6.4
-		Changed some faulty uses of esc_attr_e() to esc_attr()
 	1.6.3
 		New type: "hex_color"
 	1.6.2
@@ -1072,7 +1070,7 @@ if (!class_exists('WPSettings')) {
 				}
 				?>
 				<div style="width: 150px; float: left;">
-					<input type="text" name="<?php esc_attr( $this->InputName[$index] ) ?>" id="<?php esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" >
+					<input type="text" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr_e( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" >
 				</div>
 				<div style="clear: both;"></div>
 				<?php
@@ -1095,7 +1093,7 @@ if (!class_exists('WPSettings')) {
 				}
 				?>
 				<div style="width: 150px; float: left;">
-					# <input type="text" name="<?php esc_attr( $this->InputName[$index] ) ?>" id="<?php esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" >
+					# <input type="text" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr_e( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" >
 				</div>
 				<div style="clear: both;"></div>
 				<?php
@@ -1119,7 +1117,7 @@ if (!class_exists('WPSettings')) {
 				}
 				?>
 				<div style="width: 150px; float: left;">
-					<input type="checkbox" name="<?php esc_attr( $this->InputName[$index] ) ?>" id="<?php esc_attr( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> >
+					<input type="checkbox" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> >
 				</div>
 				<div style="clear: both;"></div>
 				<?php
@@ -1143,7 +1141,7 @@ if (!class_exists('WPSettings')) {
 				}
 				?>
 				<div style="width: 150px; float: left;">
-					<select name="<?php esc_attr( $this->InputName[$index] ) ?>" id="<?php esc_attr( $this->FieldId .'_'.$index ) ?>">
+					<select name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>">
 						<?php
 						// Loop options through option groups
 						if ($this->OptionGroups) {
@@ -1152,7 +1150,7 @@ if (!class_exists('WPSettings')) {
 							// Then loop through the option groups
 							foreach ($this->OptionGroups AS $optgroup_index => $optgroup) {
 								?>
-								<optgroup label="<?php esc_attr( $optgroup->Name )?>">
+								<optgroup label="<?php esc_attr_e( $optgroup->Name )?>">
 									<?php
 									$this->__outputDropDownOptions($index, $optgroup);
 									?>
@@ -1195,7 +1193,7 @@ if (!class_exists('WPSettings')) {
 					continue;
 				}
 				?>
-				<option value="<? esc_attr( $option->Value )?>" id="<?php esc_attr( $this->FieldId .'_'.$field_index.'_'.$option_index ) ?>" <?php selected($this->CurrentValue[$field_index], $option->Value) ?>><?php esc_attr( $option->Name ) ?></option>
+				<option value="<? esc_attr_e( $option->Value )?>" id="<?php esc_attr_e( $this->FieldId .'_'.$field_index.'_'.$option_index ) ?>" <?php selected($this->CurrentValue[$field_index], $option->Value) ?>><?php esc_attr_e( $option->Name ) ?></option>
 				<?php
 			}
 		}
@@ -1220,7 +1218,7 @@ if (!class_exists('WPSettings')) {
 					foreach ($this->Options AS $option_index => $option) {
 						?>
 						<p>
-							<input type="radio" name="<?php esc_attr( $this->InputName[$index] ) ?>" value="<? esc_attr( $option->Value )?>" id="<?php esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>" <?php checked($this->CurrentValue[$index], $option->Value) ?>> <label for="<?php esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>"><?php esc_attr( $option->Name ) ?></label>
+							<input type="radio" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" value="<? esc_attr_e( $option->Value )?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index.'_'.$option_index ) ?>" <?php checked($this->CurrentValue[$index], $option->Value) ?>> <label for="<?php esc_attr_e( $this->FieldId .'_'.$index.'_'.$option_index ) ?>"><?php esc_attr_e( $option->Name ) ?></label>
 						</p>
 						<?php
 					}
