@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WPSettings Test Plugin
-Plugin URI: http://www.feedmeastraycat.net/
+Plugin URI: http://github.com/feedmeastraycat/WPSettings
 Description: Test
 Author: David Mårtensson <david.martensson@gmail.com>
 Version: 0.1
