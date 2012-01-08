@@ -16,9 +16,11 @@ How to
 To enable WPSettings to work in one WordPress page, where multiple plugins or themes might use WPSettings (might not be that common, but I do myself so this is my solution), a namespace has been added to WPSettings. The namespace will always be \FeedMeAStrayCat plus \WPSettings_1_6_4 (for that specific version). 1.6.4 has \FeedMeAStrayCat\WPSettings_1_6_4\ for example.
  	
 You can use the namespace to call the function: 
+
 	$wp_settings_page = new \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage(...)
  	
 Or you use the "use" statement:
+
 	require_once('/path/to/wpsettings.php');
 	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
 	$wp_settings_page = new WPSettingsPage(...)
