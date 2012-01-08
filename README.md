@@ -19,9 +19,11 @@ The namespace will always look like this: \FeedMeAStrayCat\WPSettings_1_6_4 (for
 Use it together with if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings')) to only include your WPSettings file with the correct version if it hasn't already been included.
  	
 In you code you can use the namespace to call the function/class directly: 
+
 	$wp_settings_page = new \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage(...)
  	
 Or you use the "use" statement:
+
 	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
 	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings'))
 		require_once('/path/to/wpsettings.php');
