@@ -13,7 +13,7 @@ How to
 ------------
 
 ### Important note about namespaces
-To enable WPSettings to work on a WordPress site, where multiple plugins or themes uses WPSettings (even though, it might not be that common), a namespace has been added to WPSettings. 
+To enable WPSettings to work on a WordPress site, where multiple plugins or themes uses WPSettings (even though it might not be that common), a namespace has been added to WPSettings. 
 The namespace will always look like this: \FeedMeAStrayCat\WPSettings_1_6_4 (for that specific version).
  	
 You can use the namespace to call the function: 
