@@ -2,11 +2,15 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6.3
+ * @version 1.6.4
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
  */
+
+
+// Set namespace
+namespace FeedMeAStrayCat\WPSettings_1_6_4;
 
 
 /*************************************
@@ -25,6 +29,23 @@
  	
  	
  	HOW TO
+ 	
+ 	Important note about namespaces:
+ 	----------------------------------
+ 	To enable WPSettings to work in one WordPress page, where multiple plugins or themes might use WPSettings (might not be that common, but I do myself so this is my solution),
+ 	a namespace has been added to WPSettings. The namespace will always be \FeedMeAStrayCat plus \WPSettings_1_6_4 (for that specific version). 1.6.4 has \FeedMeAStrayCat\WPSettings_1_6_4\
+ 	for example.
+ 	
+ 	You can use the namespace to call the function: 
+ 		$wp_settings_page = new \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage(...)
+ 	
+ 	Or you use the "use" statement:
+ 		require_once('/path/to/wpsettings.php');
+ 		use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
+ 		$wp_settings_page = new WPSettingsPage(...)
+ 		
+ 	Just remember to add use statements to all classes that you call directly.
+ 	----------------------------------
  	
 	A simple example:
 	----------------------------------
@@ -288,7 +309,7 @@
 	
 	REQUIREMENTS
 	
-	1) PHP 5
+	1) PHP 5.3 (changed from 5.0 to 5.3 in WPSettings 1.6.4)
 	2) WordPress 3.x (Tested in 3.2.1 and up, but will most likely work in 3.0 or even 2.7 when the Settings API was added)
 	
 	
@@ -303,6 +324,12 @@
 	
 	VERSION HISTORY
 	
+	1.6.4
+		Now requires PHP 5.3
+		WPSettings now is available from namespace FeedMeAStrayCat\WPSettings_X_X_X\ (see first note about namespaces).
+		Added footer text "Created with WPSettings X.X.X" to admin footer (on pages created with WPSettings). Can be
+		disabled by setting WPSettings::$no_footer_text to true.
+		Removed WP_SETTINGS_VERSION (added in 1.6.2) since it's not needed now with the namespace.
 	1.6.3
 		New type: "hex_color"
 	1.6.2
@@ -392,7 +419,15 @@ if (!class_exists('WPSettings')) {
 	 */
 	class WPSettings {
 		
-		const VERSION = "1.6.2";
+		// Version constant
+		const VERSION = "1.6.4";
+		
+		
+		/**
+		 * Override to true to remove footer text
+		 * @var bool
+		 */
+		public static $no_footer_text = false;
 	
 		/**
 		 * Magic get function, gets method first if exists, or property
@@ -564,14 +599,35 @@ if (!class_exists('WPSettings')) {
 			}
 		}
 		
+		
+		/**
+		 * Output settings page footer (added through action: admin_footer_text)
+		 * Enter description here ...
+		 * @param unknown_type $footer_text
+		 */
+		public function outputFooterText($footer_text) {
+			// Remove action
+			remove_action('admin_footer_text', array($this, 'outputFooterText'));
+			// Append and return footer text
+			$footer_text .= " | ".sprintf(__('Settings page created with <a href="%s">WPSettings %s</a>'), 'https://github.com/feedmeastraycat/WPSettings', WPSettings::VERSION);
+			return $footer_text;
+		}
+		
+		
 		/**
 		 * The actual output of this objects page
 		 */
 		private function __output() {
+			// Add action for footer text
+			if (!$this::$no_footer_text) {
+				add_action('admin_footer_text', array($this, 'outputFooterText'), 50, 1);
+			}
+			// Output page
 			?>
 			<div class="wrap">
 				<?php $this->__getIcon(); ?>
 				<h2><?php echo $this->Title ?><?php echo ($this->Title && $this->Subtitle ? " &mdash; ".$this->Subtitle:"") ?></h2>
+				<p><em>Created by WPSettings <?php echo WPSettings::VERSION ?></em></p>
 				<?php if( isset($_GET['settings-updated']) ) : ?>
 				    <div id="message" class="updated">
 				        <p><strong><?php _e('Settings saved.') ?></strong></p>
@@ -1373,23 +1429,3 @@ if (!class_exists('WPSettings')) {
 
 	
 }
-
-
-
-// WPSettings already exists.
-else {
-	// WPSettings already exists, but WPSettingsVersion isn't defined. Can't know which version
-	// is loaded so define as version 1.0
-	if (!defined('WP_SETTINGS_VERSION')) {
-		define('WP_SETTINGS_VERSION', '1.0');
-	}
-}
-
-
-
-// Make sure a define exist with current version
-if (!defined('WP_SETTINGS_VERSION')) {
-	define('WP_SETTINGS_VERSION', WPSettings::VERSION);
-}
-
-

@@ -12,6 +12,19 @@ I do more WP stuff together with Odd Alice: http://oddalice.com/
 How to
 ------------
 
+### Important note about namespaces
+To enable WPSettings to work in one WordPress page, where multiple plugins or themes might use WPSettings (might not be that common, but I do myself so this is my solution), a namespace has been added to WPSettings. The namespace will always be \FeedMeAStrayCat plus \WPSettings_1_6_4 (for that specific version). 1.6.4 has \FeedMeAStrayCat\WPSettings_1_6_4\ for example.
+ 	
+You can use the namespace to call the function: 
+ 	$wp_settings_page = new \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage(...)
+ 	
+Or you use the "use" statement:
+ 	require_once('/path/to/wpsettings.php');
+ 	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
+ 	$wp_settings_page = new WPSettingsPage(...)
+ 		
+Just remember to add use statements to all classes that you call directly.
+
 ### A simple example
 
 	require_once('/path/to/wpsettings.php');
@@ -255,7 +268,7 @@ These are the custom actions that are thrown by WPSettings which can be used to 
 Requirements
 ------------
 	
-1. PHP 5
+1. PHP 5.3 (changed from 5.0 to 5.3 in WPSettings 1.6.4)
 2. WordPress 3.x (Tested in 3.2.1 and up, but will most likely work in 3.0 or even 2.7 when the Settings API was added)
 
 
@@ -269,7 +282,12 @@ Todos
 		
 Version history
 ------------
-	
+
+* 1.6.4
+ * Now requires PHP 5.3
+ * WPSettings now is available from namespace FeedMeAStrayCat\WPSettings_X_X_X\ (see first note about namespaces).
+ * Added footer text "Created with WPSettings X.X.X" to admin footer (on pages created with WPSettings). Can be disabled by setting WPSettings::$no_footer_text to true.
+ * Removed WP_SETTINGS_VERSION (added in 1.6.2) since it's not needed now with the namespace.	
 * 1.6.3
  * New type: "hex_color".
 * 1.6.2
