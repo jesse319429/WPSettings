@@ -632,7 +632,6 @@ if (!class_exists('WPSettings')) {
 			<div class="wrap">
 				<?php $this->__getIcon(); ?>
 				<h2><?php echo $this->Title ?><?php echo ($this->Title && $this->Subtitle ? " &mdash; ".$this->Subtitle:"") ?></h2>
-				<p><em>Created by WPSettings <?php echo WPSettings::VERSION ?></em></p>
 				<?php if( isset($_GET['settings-updated']) ) : ?>
 				    <div id="message" class="updated">
 				        <p><strong><?php _e('Settings saved.') ?></strong></p>
