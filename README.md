@@ -31,6 +31,7 @@ Just remember to add use statements to all classes that you call directly.
 ### A simple example
 
 	require_once('/path/to/wpsettings.php');
+	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
 
 	add_action('admin_menu', 'my_admin_menu');
 	add_action('admin_init', 'my_admin_init');
@@ -96,6 +97,7 @@ Just remember to add use statements to all classes that you call directly.
 You can add subpages by calling the function addSubPage() on a WPSettingsPage object. All the regular WPSettings features works on a sub page. The sub page is put as a sub menu page link in the WP menu.
 
 	require_once('/path/to/wpsettings.php');
+	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
 	
 	add_action('admin_menu', 'my_admin_menu');
 	add_action('admin_init', 'my_admin_init');
@@ -140,6 +142,8 @@ You can add subpages by calling the function addSubPage() on a WPSettingsPage ob
 Through WPSettingsField->addFilter() you can add filters that uses the built in WP filtes api. Send in which type of filter you want to use, which must be one of the WPSettingsField::FILTER_ constants, the callback function and a priority integer.
 
 	require_once('/path/to/wpsettings.php');
+	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
+	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsField;
 	
 	add_action('admin_menu', 'my_admin_menu');
 	add_action('admin_init', 'my_admin_init');
@@ -188,6 +192,7 @@ Through WPSettingsField->addFilter() you can add filters that uses the built in 
 Output sections can be used to output custom HTML in the end of a settings page. Each output section is a callback function that will be called after the settings sections in the order they where added. If you want to input custom form elements, you need to store them by your self using the "wps_before_update" action.
 
 	require_once('/path/to/wpsettings.php');
+	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
 	
 	add_action('admin_menu', 'my_admin_menu');
 	add_action('admin_init', 'my_admin_init');

@@ -50,6 +50,7 @@ namespace FeedMeAStrayCat\WPSettings_1_6_4;
 	A simple example:
 	----------------------------------
 	require_once('/path/to/wpsettings.php');
+	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
 	
 	add_action('admin_menu', 'my_admin_menu');
 	add_action('admin_init', 'my_admin_init');
@@ -118,6 +119,7 @@ namespace FeedMeAStrayCat\WPSettings_1_6_4;
 	page link in the WP menu.
 	----------------------------------
 	require_once('/path/to/wpsettings.php');
+	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
 	
 	add_action('admin_menu', 'my_admin_menu');
 	add_action('admin_init', 'my_admin_init');
@@ -164,6 +166,8 @@ namespace FeedMeAStrayCat\WPSettings_1_6_4;
 	you want to use, which must be one of the WPSettingsField::FILTER_ constants, the callback function and a priority integer.
 	----------------------------------
 	require_once('/path/to/wpsettings.php');
+	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
+	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsField;
 	
 	add_action('admin_menu', 'my_admin_menu');
 	add_action('admin_init', 'my_admin_init');
@@ -215,6 +219,7 @@ namespace FeedMeAStrayCat\WPSettings_1_6_4;
 	need to store them by your self using the "wps_before_update" action.
 	----------------------------------
 	require_once('/path/to/wpsettings.php');
+	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
 	
 	add_action('admin_menu', 'my_admin_menu');
 	add_action('admin_init', 'my_admin_init');
