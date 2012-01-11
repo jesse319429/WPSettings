@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6.4
+ * @version 1.6.5
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -10,7 +10,7 @@
 
 
 // Set namespace
-namespace FeedMeAStrayCat\WPSettings_1_6_4;
+namespace FeedMeAStrayCat\WPSettings_1_6_5;
 
 
 /*************************************
@@ -342,6 +342,8 @@ namespace FeedMeAStrayCat\WPSettings_1_6_4;
 	
 	VERSION HISTORY
 	
+	1.6.5
+		Removed width on container divs for output of dropdowns
 	1.6.4
 		Now requires PHP 5.3
 		WPSettings now is available from namespace FeedMeAStrayCat\WPSettings_X_X_X\ (see first note about namespaces).
@@ -1213,7 +1215,7 @@ if (!class_exists('WPSettings')) {
 					<?php
 				}
 				?>
-				<div style="width: 150px; float: left;">
+				<div style="float: left;">
 					<select name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>">
 						<?php
 						// Loop options through option groups

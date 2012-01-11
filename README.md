@@ -303,6 +303,8 @@ Todos
 Version history
 ------------
 
+* 1.6.5
+ * Removed width on container divs for output of dropdowns
 * 1.6.4
  * Now requires PHP 5.3
  * WPSettings now is available from namespace FeedMeAStrayCat\WPSettings_X_X_X\ (see first note about namespaces).
