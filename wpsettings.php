@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6.6
+ * @version 1.6.7
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -10,7 +10,7 @@
 
 
 // Set namespace
-namespace FeedMeAStrayCat\WPSettings_1_6_6;
+namespace FeedMeAStrayCat\WPSettings_1_6_7;
 
 
 /*************************************
@@ -349,6 +349,10 @@ namespace FeedMeAStrayCat\WPSettings_1_6_6;
 	
 	VERSION HISTORY
 	
+	1.6.7
+		Changed how "checkbox" is output by adding a hidden field that is changed to "1" or "0" depending on the checkbox.
+		It's changed using jQuery (which is required and enqueued when a WPSettingsPage is constructed) and the .change()
+		event. This way a checkbox is stored as "1" or "0". Not just "1" when it's clicked and not at all when it's "0".
 	1.6.6
 		Moved Field sanitize from WPSettingsPage->sanitize() to WPSettingsField->sanitize() and fixed how 
 		register_setting() is called in WPSettingsPage->activateSettings(). This fixes a bug that prevented settings name,
@@ -547,6 +551,8 @@ if (!class_exists('WPSettings')) {
 		 * @return WPSettingsPage
 		 */
 		public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, $icon_url='', $position=null) {
+			
+			wp_enqueue_script("jquery");
 		
 			$this->Id = $menu_slug;
 			
@@ -1264,7 +1270,16 @@ if (!class_exists('WPSettings')) {
 				}
 				?>
 				<div style="width: 150px; float: left;">
-					<input type="checkbox" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> >
+					<script language="javascript" type="text/javascript">
+					jQuery(document).ready(function() {
+						jQuery('#cb_<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>').change(function() {
+							var value = (jQuery('#cb_<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>').is(':checked') ? 1:0);
+							jQuery('#<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>').val(value);
+						});
+					});
+					</script>
+					<input type="hidden" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="<?php echo ($this->CurrentValue[$index] ? "1":"0") ?>" >
+					<input type="checkbox" name="cb_<?php esc_attr_e( $this->InputName[$index] ) ?>" id="cb_<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> >
 				</div>
 				<div style="clear: both;"></div>
 				<?php

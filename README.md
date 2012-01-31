@@ -303,6 +303,8 @@ Todos
 Version history
 ------------
 
+* 1.6.7
+ * Changed how "checkbox" is output by adding a hidden field that is changed to "1" or "0" depending on the checkbox. It's changed using jQuery (which is required and enqueued when a WPSettingsPage is constructed) and the .change() event. This way a checkbox is stored as "1" or "0". Not just "1" when it's clicked and not at all when it's "0".
 * 1.6.6
  * Moved Field sanitize from WPSettingsPage->sanitize() to WPSettingsField->sanitize() and fixed how register_setting() is called in WPSettingsPage->activateSettings(). This fixes a bug that prevented settings name, that wasn't part of an array (ex my_settings[name]), to be stored correctly. Settings now registers ones per name (which must be unique) as well as one per "array name" ("my_settings" from example my_settings[name]). Array names registers with WPSettingsPage->sanitize() which loops through and calles WPSettingsField->sanitize() once per field. On the fields that has that specific array name.
  * Throws an exception when adding fields without a unique name.
