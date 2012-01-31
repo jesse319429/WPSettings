@@ -303,6 +303,10 @@ Todos
 Version history
 ------------
 
+* 1.6.6
+ * Moved Field sanitize from WPSettingsPage->sanitize() to WPSettingsField->sanitize() and fixed how register_setting() is called in WPSettingsPage->activateSettings(). This fixes a bug that prevented settings name, that wasn't part of an array (ex my_settings[name]), to be stored correctly. Settings now registers ones per name (which must be unique) as well as one per "array name" ("my_settings" from example my_settings[name]). Array names registers with WPSettingsPage->sanitize() which loops through and calles WPSettingsField->sanitize() once per field. On the fields that has that specific array name.
+ * Throws an exception when adding fields without a unique name.
+ * Fixed namespace error when throwing Exceptions.
 * 1.6.5
  * Removed width on container divs for output of dropdowns
 * 1.6.4

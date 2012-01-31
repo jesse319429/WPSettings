@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6.5
+ * @version 1.6.6
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -10,7 +10,7 @@
 
 
 // Set namespace
-namespace FeedMeAStrayCat\WPSettings_1_6_5;
+namespace FeedMeAStrayCat\WPSettings_1_6_6;
 
 
 /*************************************
@@ -322,6 +322,13 @@ namespace FeedMeAStrayCat\WPSettings_1_6_5;
 	wps_before_update
 		Parameters: 0
 		Called after validation. Before update.
+		
+		
+		
+	SETTINGS
+	
+	WPSettings::$no_footer_text = true/false; 
+		To display, or not display, footer information text on WPSettings created pages.
 	
 	
 	
@@ -342,6 +349,15 @@ namespace FeedMeAStrayCat\WPSettings_1_6_5;
 	
 	VERSION HISTORY
 	
+	1.6.6
+		Moved Field sanitize from WPSettingsPage->sanitize() to WPSettingsField->sanitize() and fixed how 
+		register_setting() is called in WPSettingsPage->activateSettings(). This fixes a bug that prevented settings name,
+		that wasn't part of an array (ex my_settings[name]), to be stored correctly. Settings now registers ones per
+		name (which must be unique) as well as one per "array name" ("my_settings" from example my_settings[name]).
+		Array names registers with WPSettingsPage->sanitize() which loops through and calles WPSettingsField->sanitize()
+		once per field. On the fields that has that specific array name.
+		Throws an exception when adding fields without a unique name.
+		Fixed namespace error when throwing Exceptions.
 	1.6.5
 		Removed width on container divs for output of dropdowns
 	1.6.4
@@ -440,7 +456,17 @@ if (!class_exists('WPSettings')) {
 	class WPSettings {
 		
 		// Version constant
-		const VERSION = "1.6.4";
+		const VERSION = "1.6.6";
+		
+		
+		/**
+		 * Keeps all input names to make sure that they are unique
+		 * Access is protected because it's only used internally by WPSettingsField->addField()
+		 * @var array
+		 * @static
+		 * @access protected
+		 */
+		protected static $__input_names = array();
 		
 		
 		/**
@@ -469,7 +495,7 @@ if (!class_exists('WPSettings')) {
 					return $this->$name;
 				}
 				else {
-					throw new Exception("Undefined method or property ".$name);
+					throw new \Exception("Undefined method or property ".$name);
 				}
 			}
 		}
@@ -561,34 +587,44 @@ if (!class_exists('WPSettings')) {
 		 * WordPress saves the data
 		 */
 		public function activateSettings() {
+			
+			$test = array();
 	
 			// Start looping through all pages
 			$pages = array_merge(array($this), $this->__subpages);
 			foreach ($pages AS $index => $page) {
-				// Get all uniques post names
-				$names = array();
+				// Get all uniques post names on array type names (ex my_setting[name])
+				$array_post_names = array();
 				// - Start looping through section
 				foreach ($page->Sections AS $index => $section) {
 					// - Start looping through each field in section
 					foreach ($section->Fields AS $index2 => $field) {
 						// - Start looping through each input name in this field (most often only 1)
 						foreach ($field->InputName AS $index3 => $input_name) {
+							// Part of an array name, ex: my_settings[name]
+							// These registers as one setting for "my_settings", even if there exist my_settings[name]
+							// and my_settings[name2]. Registers once per $page (in first loop here).
 							if (strpos($input_name, "[") !== false) {
 								$temp = explode("[", $input_name);
 								$name = $temp[0];
+								$array_post_names[] = $name;
 							}
+							// Is it's own name, can only work when the name is unique, registers the setting directly
+							// with sanitize on the $field object 
 							else {
-								$name = $input_name;
+								register_setting($this->Id, $input_name, array($field, 'sanitize'));
 							}
-							$names[] = $name;
 						}
 					}
 				}
-				// Get unique names
-				$names = array_unique($names);
-				// Register them for update
-				foreach ($names AS $index => $name) {
-				 	register_setting($this->Id, $name, array($page, 'sanitize'));
+				// Got any array post names?
+				if (count($array_post_names) > 0) {
+					// Get unique names
+					$array_post_names = array_unique($array_post_names);
+					// Register them for sanitize on the $page object
+					foreach ($array_post_names AS $index => $name) {
+					 	register_setting($this->Id, $name, array($page, 'sanitize'));
+					}
 				}
 			}
 			
@@ -682,10 +718,18 @@ if (!class_exists('WPSettings')) {
 		
 		
 		/**
-		 * Sanitize data before it's stored in the databse
+		 * Sanitize data before it's stored in the databse. This sanitize function is registered when there are array post
+		 * names. For example if the names on three fields are my_settings[name1], my_settings[name2] and other_setting.
+		 * This function will be used to sanitize "my_settings" and $input will be an array containing the values.
+		 * But "other_setting" will be santized directly by the field object sanitize() function (which gets called
+		 * by this function, in the loop, as well).
+		 * @param array $input
 		 */
 		public function sanitize($input) {
 			
+			// Create new input
+			$new_input = array();
+		
 			// Loop through sections
 			foreach ($this->Sections AS $section_index => $section) {
 				// Loop through fields in section
@@ -694,51 +738,31 @@ if (!class_exists('WPSettings')) {
 					foreach ($field->InputName AS $input_index => $input_name) {
 						// Get name
 						if (strpos($input_name, "[") !== false) {
+							// Get name from input name
 							$temp = explode("[", $input_name);
 							$name = str_replace("]", "", $temp[1]);
+							// Isn't a part of this input
+							if (!isset($input[$name])) {
+								continue;
+							}
+							// Get input
+							$_input = $input[$name];
 						}
+						// Has nothing to do here
 						else {
-							$name = $input_name;
-						}
-						// Isn't a part of this input
-						if (!isset($input[$name])) {
 							continue;
 						}
-						// Sanitize by type
-						switch ($field->Type) {
-							case "checkbox":
-								$new_input[$name] = $this->__sanitizeCheckbox($input[$name]);
-							break;
-							case "int":
-								$new_input[$name] = $this->__sanitizeInt($input[$name]);
-							break;
-							case "url":
-								$new_input[$name] = $this->__sanitizeURL($input[$name]);
-							break;
-							case "hex_color":
-								$new_input[$name] = $this->__sanitizeHexColor($input[$name]);
-							break;
-							case "dropdown":
-							case "radio":
-							case "text":
-							default:
-								$new_input[$name] = $this->__sanitizeText($input[$name]);
-							break;
-						}
-						// Do filter
-						if ( has_filter('wps_'.WPSettingsField::FILTER_UPDATE.'_'.$field->FieldId) ) {
-							$return_value = apply_filters('wps_'.WPSettingsField::FILTER_UPDATE.'_'.$field->FieldId, $field, $new_input[$name]);
-							if (!is_null($return_value)) {
-								$new_input[$name] = $return_value;
-							}
-						}
+						
+						// Sanitize on the field
+						$new_input[$name] = $field->sanitize($_input);
+
 					}
 				}
 			}
-			
+
 			// Do update action
 			do_action('wps_before_update');
-			
+
 			return $new_input;
 		}
 		
@@ -753,7 +777,7 @@ if (!class_exists('WPSettings')) {
 		 */
 		public function addSettingsSection($id, $headline, $description='') {
 			if (!preg_match("/^[a-z0-9\-\_]{1,50}$/i", $id)) {
-				throw new Exception("Section id failed to validate");
+				throw new \Exception("Section id failed to validate");
 			}
 			$section = new WPSettingsSection($this, $id, $headline, $description);	
 			$this->Sections[] = &$section;
@@ -772,7 +796,7 @@ if (!class_exists('WPSettings')) {
 		public function addOutputSection($id, $callback, $headline='') {
 			// Validate id
 			if (!preg_match("/^[a-z0-9\-\_]{1,50}$/i", $id)) {
-				throw new Exception("Section id failed to validate");
+				throw new \Exception("Section id failed to validate");
 			}
 			
 			// Make sure class and metod exists if array
@@ -807,57 +831,6 @@ if (!class_exists('WPSettings')) {
 			$this->__pageIconClass = $add_classes;
 		}
 		
-		
-		/**
-		 * Sanitize plain text
-		 * @param string $text
-		 * @return string
-		 */
-		private function __sanitizeText($text) {
-			global $wpdb;
-			return $wpdb->escape($text);
-		}
-		
-		/**
-		 * Sanitize url
-		 * @param string $text
-		 * @return string
-		 */
-		private function __sanitizeURL($text) {
-			return esc_url($text);
-		}
-		
-		/**
-		 * Sanitize hex color
-		 * @param string $text
-		 */
-		private function __sanitizeHexColor($text) {
-			$text = str_replace("#", "", $text);
-			if (preg_match('/^[a-f0-9]{6}$/i', $text)) {
-				return $text;
-			}
-			else {
-				return "";
-			}
-		}
-		
-		/**
-		 * Sanitize int
-		 * @param mixed $text
-		 * @return int
-		 */
-		private function __sanitizeInt($text) {
-			return (int)($text);
-		}
-		
-		/**
-		 * Sanitize checkbox
-		 * @param mixed $checked
-		 * @return int
-		 */
-		private function __sanitizeCheckbox($checked) {
-			return ($checked ? 1:0);
-		}
 		
 		/**
 		 * Get page icon
@@ -982,8 +955,14 @@ if (!class_exists('WPSettings')) {
 		public function addField($field_id, $headline, $type, $input_name, $current_value='', $help_text='') {
 			// Validate id
 			if (!preg_match("/^[a-z0-9\-\_]{1,50}$/i", $field_id)) {
-				throw new Exception("Section id failed to validate");
+				throw new \Exception("Section id failed to validate");
 			}
+			// Make sure field name is unique
+			if (in_array($input_name, self::$__input_names)) {
+				throw new \Exception("Input name is not unique.");
+			}
+			// Store input name to make sure they are unique
+			self::$__input_names[] = $input_name;
 			// Create dropdown
 			if ($type == "dropdown") {
 				$field = new WPSettingsFieldDropDown($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
@@ -1127,6 +1106,99 @@ if (!class_exists('WPSettings')) {
 			
 			// Add filter
 			add_filter('wps_'.$filter.'_'.$this->FieldId, $callback, $priority, $this->__filterParameters[$filter]);
+		}
+		
+		/**
+		 * Sanitize
+		 * @param mixed $value
+		 * @return $value Returnes sanitized value
+		 */
+		public function sanitize($value) {
+			
+			// Sanitize by type
+			switch ($this->Type) {
+				case "checkbox":
+					$new_value = $this->__sanitizeCheckbox($value);
+				break;
+				case "int":
+					$new_value = $this->__sanitizeInt($value);
+				break;
+				case "url":
+					$new_value = $this->__sanitizeURL($value);
+				break;
+				case "hex_color":
+					$new_value = $this->__sanitizeHexColor($value);
+				break;
+				case "dropdown":
+				case "radio":
+				case "text":
+				default:
+					$new_value = $this->__sanitizeText($value);
+				break;
+			}
+			
+			// Do filter
+			if ( has_filter('wps_'.WPSettingsField::FILTER_UPDATE.'_'.$this->FieldId) ) {
+				$return_value = apply_filters('wps_'.WPSettingsField::FILTER_UPDATE.'_'.$this->FieldId, $this, $new_value);
+				if (!is_null($return_value)) {
+					$new_value = $return_value;
+				}
+			 }
+			 
+			 // Return
+			 return $new_value;
+			
+		}
+		
+		/**
+		 * Sanitize plain text
+		 * @param string $text
+		 * @return string
+		 */
+		private function __sanitizeText($text) {
+			global $wpdb;
+			return $wpdb->escape($text);
+		}
+		
+		/**
+		 * Sanitize url
+		 * @param string $text
+		 * @return string
+		 */
+		private function __sanitizeURL($text) {
+			return esc_url($text);
+		}
+		
+		/**
+		 * Sanitize hex color
+		 * @param string $text
+		 */
+		private function __sanitizeHexColor($text) {
+			$text = str_replace("#", "", $text);
+			if (preg_match('/^[a-f0-9]{6}$/i', $text)) {
+				return $text;
+			}
+			else {
+				return "";
+			}
+		}
+		
+		/**
+		 * Sanitize int
+		 * @param mixed $text
+		 * @return int
+		 */
+		private function __sanitizeInt($text) {
+			return (int)($text);
+		}
+		
+		/**
+		 * Sanitize checkbox
+		 * @param mixed $checked
+		 * @return int
+		 */
+		private function __sanitizeCheckbox($checked) {
+			return ($checked ? 1:0);
 		}
 		
 		/**
