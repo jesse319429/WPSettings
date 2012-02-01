@@ -460,7 +460,7 @@ if (!class_exists('WPSettings')) {
 	class WPSettings {
 		
 		// Version constant
-		const VERSION = "1.6.6";
+		const VERSION = "1.6.7";
 		
 		
 		/**
