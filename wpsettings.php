@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6.7
+ * @version 1.6.8
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -10,7 +10,7 @@
 
 
 // Set namespace
-namespace FeedMeAStrayCat\WPSettings_1_6_7;
+namespace FeedMeAStrayCat\WPSettings_1_6_8;
 
 
 /*************************************
@@ -349,6 +349,9 @@ namespace FeedMeAStrayCat\WPSettings_1_6_7;
 	
 	VERSION HISTORY
 	
+	1.6.8
+		Added $placeholder as 7th optional parameter in $section->addField() which is used as placeholder-attribute in
+		text fields (for example "text" and "url" field type).
 	1.6.7
 		Changed how "checkbox" is output by adding a hidden field that is changed to "1" or "0" depending on the checkbox.
 		It's changed using jQuery (which is required and enqueued when a WPSettingsPage is constructed) and the .change()
@@ -460,7 +463,7 @@ if (!class_exists('WPSettings')) {
 	class WPSettings {
 		
 		// Version constant
-		const VERSION = "1.6.7";
+		const VERSION = "1.6.8";
 		
 		
 		/**
@@ -955,10 +958,11 @@ if (!class_exists('WPSettings')) {
 		 * @param string|array $input_name
 		 * @param string|array $current_value
 		 * @param string|array $help_text
+		 * @param string|array $placeholder
 		 * @return WPSettingsField
 		 * @throws Exception
 		 */
-		public function addField($field_id, $headline, $type, $input_name, $current_value='', $help_text='') {
+		public function addField($field_id, $headline, $type, $input_name, $current_value='', $help_text='', $placeholder='') {
 			// Validate id
 			if (!preg_match("/^[a-z0-9\-\_]{1,50}$/i", $field_id)) {
 				throw new \Exception("Section id failed to validate");
@@ -971,15 +975,15 @@ if (!class_exists('WPSettings')) {
 			self::$__input_names[] = $input_name;
 			// Create dropdown
 			if ($type == "dropdown") {
-				$field = new WPSettingsFieldDropDown($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
+				$field = new WPSettingsFieldDropDown($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder);
 			}
 			// Create a radio
 			elseIf ($type == "radio") {
-				$field = new WPSettingsFieldRadio($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
+				$field = new WPSettingsFieldRadio($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder);
 			}
 			// Create any other type
 			else {
-				$field = new WPSettingsField($this, $field_id, $headline, $type, $input_name, $current_value, $help_text);
+				$field = new WPSettingsField($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder);
 			}
 			$this->Fields[] = &$field;
 			return $field;
@@ -1004,6 +1008,7 @@ if (!class_exists('WPSettings')) {
 		protected $InputName;
 		protected $CurrentValue;
 		protected $HelpText;
+		protected $Placeholder;
 		protected $Events = array();
 		
 		const FILTER_UPDATE = "upd";
@@ -1024,9 +1029,10 @@ if (!class_exists('WPSettings')) {
 		 * @param string|array $input_name
 		 * @param string[array $current_value
 		 * @param string|array $help_text
+		 * @param string|array $placeholder
 		 * @return WPSettingsField
 		 */
-		function __construct(WPSettingsSection &$WPSettingsSection, $field_id, $headline, $type, $input_name, $current_value='', $help_text='') {
+		function __construct(WPSettingsSection &$WPSettingsSection, $field_id, $headline, $type, $input_name, $current_value='', $help_text='', $placeholder='') {
 		
 			$this->Id = $WPSettingsSection->Id;
 			$this->SectionId = $WPSettingsSection->SectionId;
@@ -1037,6 +1043,7 @@ if (!class_exists('WPSettings')) {
 			$this->InputName = (is_array($input_name) ? $input_name:array($input_name));
 			$this->CurrentValue = (is_array($current_value) ? $current_value:array($current_value));
 			$this->HelpText = (is_array($help_text) ? $help_text:array($help_text));
+			$this->Placeholder = (is_array($placeholder) ? $placeholder:array($placeholder));
 		
 	 		add_settings_field($this->FieldId,
 				$this->Headline,
@@ -1223,7 +1230,7 @@ if (!class_exists('WPSettings')) {
 				}
 				?>
 				<div style="width: 150px; float: left;">
-					<input type="text" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr_e( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" >
+					<input type="text" name="<?php esc_attr_e( $this->InputName[$index] ) ?>" id="<?php esc_attr_e( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr_e( $this->CurrentValue[$index] ) ?>" <?php if ($this->Placeholder[$index]): ?>placeholder="<?php esc_attr_e($this->Placeholder[$index]) ?>"<?php endif; ?> style="width: <?php echo $width ?>px;" >
 				</div>
 				<div style="clear: both;"></div>
 				<?php

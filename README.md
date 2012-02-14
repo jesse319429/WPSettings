@@ -303,6 +303,8 @@ Todos
 Version history
 ------------
 
+* 1.6.8
+ * Added $placeholder as 7th optional parameter in $section->addField() which is used as placeholder-attribute in text fields (for example "text" and "url" field type).
 * 1.6.7
  * Changed how "checkbox" is output by adding a hidden field that is changed to "1" or "0" depending on the checkbox. It's changed using jQuery (which is required and enqueued when a WPSettingsPage is constructed) and the .change() event. This way a checkbox is stored as "1" or "0". Not just "1" when it's clicked and not at all when it's "0".
 * 1.6.6
