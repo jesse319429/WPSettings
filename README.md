@@ -303,6 +303,9 @@ Todos
 Version history
 ------------
 
+* 1.6.9
+ * Removed redundant class_exist check. You should do a class exist like in the examples. :)
+ * Changed bad nameing habit of mine where i use double underscore ("__") as a prefix to private methods/vars. Changed to single underscore ("_").
 * 1.6.8
  * Added $placeholder as 7th optional parameter in $section->addField() which is used as placeholder-attribute in text fields (for example "text" and "url" field type).
 * 1.6.7

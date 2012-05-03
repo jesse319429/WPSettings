@@ -4,12 +4,12 @@ Plugin Name: WPSettings Test Plugin
 Plugin URI: http://github.com/feedmeastraycat/WPSettings
 Description: Test
 Author: David Mårtensson <david.martensson@gmail.com>
-Version: 0.1
+Version: 0.2
 Author URI: http://www.feedmeastraycat.net/
 */
 
-use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
-if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings')) {
+use \FeedMeAStrayCat\WPSettings_1_6_9\WPSettingsPage;
+if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_9\WPSettings')) {
     require_once('wpsettings.php');
 }
 
