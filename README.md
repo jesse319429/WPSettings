@@ -306,6 +306,7 @@ Version history
 * 1.6.10
  * Added $description as 8th parameter in $field = $section->addField(). Will output a <p class="description"> tag below the field HTML. (Can, like Headline, Type, InputName, CurrentValue, HelpText and Placeholder be set using  $field->Description = "Foo Bar" because of the magic __set() funciton).
  * Updated the magic __set() function to always call setX() functions, if they exists, before just setting the value.
+ * Bugfix in activateSettings() which caused subpage forms not submit correctly.
 * 1.6.9
  * Removed redundant class_exist check. You should do a class exist like in the examples. :)
  * Changed bad nameing habit of mine where i use double underscore ("__") as a prefix to private methods/vars. Changed to single underscore ("_").

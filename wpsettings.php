@@ -354,6 +354,7 @@ namespace FeedMeAStrayCat\WPSettings_1_6_10;
 		the field HTML. (Can, like Headline, Type, InputName, CurrentValue, HelpText and Placeholder be set using 
 		$field->Description = "Foo Bar" because of the magic __set() funciton).
 		Updated the magic __set() function to always call setX() functions, if they exists, before just setting the value.
+		Bugfix in activateSettings() which caused subpage forms not submit correctly.
 	1.6.9
 		Removed redundant class_exist check. You should do a class exist like in the examples. :)
 		Changed bad nameing habit of mine where i use double underscore ("__") as a prefix to private methods/vars. Changed
@@ -617,8 +618,6 @@ class WPSettingsPage extends WPSettings {
 	 * WordPress saves the data
 	 */
 	public function activateSettings() {
-		
-		$test = array();
 
 		// Start looping through all pages
 		$pages = array_merge(array($this), $this->_subpages);
@@ -642,7 +641,7 @@ class WPSettingsPage extends WPSettings {
 						// Is it's own name, can only work when the name is unique, registers the setting directly
 						// with sanitize on the $field object 
 						else {
-							register_setting($this->Id, $input_name, array($field, 'sanitize'));
+							register_setting($page->Id, $input_name, array($field, 'sanitize'));
 						}
 					}
 				}
@@ -653,7 +652,7 @@ class WPSettingsPage extends WPSettings {
 				$array_post_names = array_unique($array_post_names);
 				// Register them for sanitize on the $page object
 				foreach ($array_post_names AS $index => $name) {
-				 	register_setting($this->Id, $name, array($page, 'sanitize'));
+				 	register_setting($page->Id, $name, array($page, 'sanitize'));
 				}
 			}
 		}
@@ -895,7 +894,7 @@ class WPSettingsSubPage extends WPSettingsPage {
 	
 	
 	/**
-	 * Create a WP Settings Page
+	 * Create a WP Settings Sub Page
 	 * @todo Allow both menu page and options page?
 	 * @param WPSettingsPage $WPSettingsPage
 	 * @param string $page_title 
@@ -914,7 +913,10 @@ class WPSettingsSubPage extends WPSettingsPage {
 		$this->Subtitle = $page_subtitle;
 		$this->MenuSlug = $menu_slug;
 
+		//add_menu_page($page_title, $menu_title, $capability, $menu_slug, $function);
+		//echo $WPSettingsPage->MenuSlug;die;
 		add_submenu_page($WPSettingsPage->MenuSlug, $page_title, $menu_title, $capability, $menu_slug, $function);
+		//add_option_whitelist(array('oaui_login' => array('oa_user_import')));
 		
 		return $this;
 		
