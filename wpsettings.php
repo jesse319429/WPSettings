@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6.9
+ * @version 1.6.10
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -10,7 +10,7 @@
 
 
 // Set namespace
-namespace FeedMeAStrayCat\WPSettings_1_6_9;
+namespace FeedMeAStrayCat\WPSettings_1_6_10;
 
 
 /*************************************
@@ -349,6 +349,11 @@ namespace FeedMeAStrayCat\WPSettings_1_6_9;
 	
 	VERSION HISTORY
 	
+	1.6.10
+		Added $description as 8th parameter in $field = $section->addField(). Will output a <p class="description"> tag below
+		the field HTML. (Can, like Headline, Type, InputName, CurrentValue, HelpText and Placeholder be set using 
+		$field->Description = "Foo Bar" because of the magic __set() funciton).
+		Updated the magic __set() function to always call setX() functions, if they exists, before just setting the value.
 	1.6.9
 		Removed redundant class_exist check. You should do a class exist like in the examples. :)
 		Changed bad nameing habit of mine where i use double underscore ("__") as a prefix to private methods/vars. Changed
@@ -462,7 +467,7 @@ namespace FeedMeAStrayCat\WPSettings_1_6_9;
 class WPSettings {
 	
 	// Version constant
-	const VERSION = "1.6.9";
+	const VERSION = "1.6.10";
 	
 	
 	/**
@@ -507,13 +512,30 @@ class WPSettings {
 	}
 	
 	/**
-	 * Magic set function, does nothing really at this time :)
+	 * Magic set function
 	 * @param string $name
 	 * @param mixed $value
+	 * @return void
 	 */
 	public function __set($name, $value) {
-		$this->$name = $value;
-	} 
+		$method = "set{$name}";
+		if (method_exists($this, $method)) {
+			$this->$method($value);
+		}
+		elseIf (isset($this->$name)) {
+			$this->$name = $value;
+		}
+		else {
+			// isset is false on null parameters, this "fixes" that checking if tha parameter truely doesn't exist
+			$props = get_object_vars($this);
+			if (array_key_exists($name, $props)) {
+				$this->$name = $value;
+			}
+			else {
+				throw new \Exception("Failed to set \"".$name."\".");
+			}
+		}
+	}
 
 }
 
@@ -958,10 +980,11 @@ class WPSettingsSection extends WPSettings {
 	 * @param string|array $current_value
 	 * @param string|array $help_text
 	 * @param string|array $placeholder
+	 * @param string|array $description
 	 * @return WPSettingsField
 	 * @throws Exception
 	 */
-	public function addField($field_id, $headline, $type, $input_name, $current_value='', $help_text='', $placeholder='') {
+	public function addField($field_id, $headline, $type, $input_name, $current_value='', $help_text='', $placeholder='', $description='') {
 		// Validate id
 		if (!preg_match("/^[a-z0-9\-\_]{1,50}$/i", $field_id)) {
 			throw new \Exception("Section id failed to validate");
@@ -974,15 +997,15 @@ class WPSettingsSection extends WPSettings {
 		self::$_input_names[] = $input_name;
 		// Create dropdown
 		if ($type == "dropdown") {
-			$field = new WPSettingsFieldDropDown($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder);
+			$field = new WPSettingsFieldDropDown($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description);
 		}
 		// Create a radio
 		elseIf ($type == "radio") {
-			$field = new WPSettingsFieldRadio($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder);
+			$field = new WPSettingsFieldRadio($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description);
 		}
 		// Create any other type
 		else {
-			$field = new WPSettingsField($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder);
+			$field = new WPSettingsField($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description);
 		}
 		$this->Fields[] = &$field;
 		return $field;
@@ -1008,6 +1031,7 @@ class WPSettingsField extends WPSettingsSection {
 	protected $CurrentValue;
 	protected $HelpText;
 	protected $Placeholder;
+	protected $Description;
 	protected $Events = array();
 	
 	const FILTER_UPDATE = "upd";
@@ -1029,9 +1053,10 @@ class WPSettingsField extends WPSettingsSection {
 	 * @param string[array $current_value
 	 * @param string|array $help_text
 	 * @param string|array $placeholder
+	 * @param string|array $description
 	 * @return WPSettingsField
 	 */
-	function __construct(WPSettingsSection &$WPSettingsSection, $field_id, $headline, $type, $input_name, $current_value='', $help_text='', $placeholder='') {
+	function __construct(WPSettingsSection &$WPSettingsSection, $field_id, $headline, $type, $input_name, $current_value='', $help_text='', $placeholder='', $description='') {
 	
 		$this->Id = $WPSettingsSection->Id;
 		$this->SectionId = $WPSettingsSection->SectionId;
@@ -1043,6 +1068,7 @@ class WPSettingsField extends WPSettingsSection {
 		$this->CurrentValue = (is_array($current_value) ? $current_value:array($current_value));
 		$this->HelpText = (is_array($help_text) ? $help_text:array($help_text));
 		$this->Placeholder = (is_array($placeholder) ? $placeholder:array($placeholder));
+		$this->Description = (is_array($description) ? $description:array($description));
 	
  		add_settings_field($this->FieldId,
 			$this->Headline,
@@ -1118,6 +1144,14 @@ class WPSettingsField extends WPSettingsSection {
 		
 		// Add filter
 		add_filter('wps_'.$filter.'_'.$this->FieldId, $callback, $priority, $this->_filterParameters[$filter]);
+	}
+	
+	/**
+	 * Set description
+	 * @param string|array $description
+	 */
+	public function setDescription($description) {
+		$this->Description = (is_array($description) ? $description:array($description));
 	}
 	
 	/**
@@ -1234,6 +1268,8 @@ class WPSettingsField extends WPSettingsSection {
 			<div style="clear: both;"></div>
 			<?php
 			
+			$this->_outputDescription($index);
+			
 		}
 	}
 	
@@ -1256,6 +1292,8 @@ class WPSettingsField extends WPSettingsSection {
 			</div>
 			<div style="clear: both;"></div>
 			<?php
+			
+			$this->_outputDescription($index);
 			
 		}
 	}
@@ -1289,6 +1327,8 @@ class WPSettingsField extends WPSettingsSection {
 			</div>
 			<div style="clear: both;"></div>
 			<?php
+			
+			$this->_outputDescription($index);
 			
 		}
 	}
@@ -1335,6 +1375,8 @@ class WPSettingsField extends WPSettingsSection {
 			</div>
 			<div style="clear: both;"></div>
 			<?php
+			
+			$this->_outputDescription($index);
 			
 		}
 	}
@@ -1395,6 +1437,20 @@ class WPSettingsField extends WPSettingsSection {
 			<div style="clear: both;"></div>
 			<?php
 			
+			$this->_outputDescription($index);
+			
+		}
+	}
+	
+	/**
+	 * Output descreiption for a specific field index
+	 * @param int $field_index
+	 */
+	private function _outputDescription($field_index) {
+		if (isset($this->Description[$field_index]) && !empty($this->Description[$field_index])) {
+			?>
+			<p class="description"><?php echo $this->Description[$field_index]; ?></p>
+			<?php
 		}
 	}
 		
