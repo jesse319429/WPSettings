@@ -1267,7 +1267,7 @@ class WPSettingsField extends WPSettingsSection {
 			}
 			?>
 			<div style="width: 150px; float: left;">
-				<input type="text" name="<?php esc_attr( $this->InputName[$index] ) ?>" id="<?php esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr( $this->CurrentValue[$index] ) ?>" <?php if ($this->Placeholder[$index]): ?>placeholder="<?php esc_attr($this->Placeholder[$index]) ?>"<?php endif; ?> style="width: <?php echo $width ?>px;" >
+				<input type="text" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo esc_attr( $this->CurrentValue[$index] ) ?>" <?php if ($this->Placeholder[$index]): ?>placeholder="<?php echo esc_attr($this->Placeholder[$index]) ?>"<?php endif; ?> style="width: <?php echo $width ?>px;" >
 			</div>
 			<div style="clear: both;"></div>
 			<?php
@@ -1292,7 +1292,7 @@ class WPSettingsField extends WPSettingsSection {
 			}
 			?>
 			<div style="width: 150px; float: left;">
-				# <input type="text" name="<?php esc_attr( $this->InputName[$index] ) ?>" id="<?php esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php esc_attr( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" >
+				# <input type="text" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo esc_attr( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" >
 			</div>
 			<div style="clear: both;"></div>
 			<?php
@@ -1320,14 +1320,14 @@ class WPSettingsField extends WPSettingsSection {
 			<div style="width: 150px; float: left;">
 				<script language="javascript" type="text/javascript">
 				jQuery(document).ready(function() {
-					jQuery('#cb_<?php esc_attr( $this->FieldId .'_'.$index ) ?>').change(function() {
-						var value = (jQuery('#cb_<?php esc_attr( $this->FieldId .'_'.$index ) ?>').is(':checked') ? 1:0);
-						jQuery('#<?php esc_attr( $this->FieldId .'_'.$index ) ?>').val(value);
+					jQuery('#cb_<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>').change(function() {
+						var value = (jQuery('#cb_<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>').is(':checked') ? 1:0);
+						jQuery('#<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>').val(value);
 					});
 				});
 				</script>
-				<input type="hidden" name="<?php esc_attr( $this->InputName[$index] ) ?>" id="<?php esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo ($this->CurrentValue[$index] ? "1":"0") ?>" >
-				<input type="checkbox" name="cb_<?php esc_attr( $this->InputName[$index] ) ?>" id="cb_<?php esc_attr( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> >
+				<input type="hidden" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo ($this->CurrentValue[$index] ? "1":"0") ?>" >
+				<input type="checkbox" name="cb_<?php echo esc_attr( $this->InputName[$index] ) ?>" id="cb_<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> >
 			</div>
 			<div style="clear: both;"></div>
 			<?php
@@ -1353,7 +1353,7 @@ class WPSettingsField extends WPSettingsSection {
 			}
 			?>
 			<div style="float: left;">
-				<select name="<?php esc_attr( $this->InputName[$index] ) ?>" id="<?php esc_attr( $this->FieldId .'_'.$index ) ?>">
+				<select name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>">
 					<?php
 					// Loop options through option groups
 					if ($this->OptionGroups) {
@@ -1362,7 +1362,7 @@ class WPSettingsField extends WPSettingsSection {
 						// Then loop through the option groups
 						foreach ($this->OptionGroups AS $optgroup_index => $optgroup) {
 							?>
-							<optgroup label="<?php esc_attr( $optgroup->Name )?>">
+							<optgroup label="<?php echo esc_attr( $optgroup->Name )?>">
 								<?php
 								$this->_outputDropDownOptions($index, $optgroup);
 								?>
@@ -1407,7 +1407,7 @@ class WPSettingsField extends WPSettingsSection {
 				continue;
 			}
 			?>
-			<option value="<? esc_attr( $option->Value )?>" id="<?php esc_attr( $this->FieldId .'_'.$field_index.'_'.$option_index ) ?>" <?php selected($this->CurrentValue[$field_index], $option->Value) ?>><?php esc_attr( $option->Name ) ?></option>
+			<option value="<? esc_attr( $option->Value )?>" id="<?php echo esc_attr( $this->FieldId .'_'.$field_index.'_'.$option_index ) ?>" <?php selected($this->CurrentValue[$field_index], $option->Value) ?>><?php echo esc_attr( $option->Name ) ?></option>
 			<?php
 		}
 	}
@@ -1432,7 +1432,7 @@ class WPSettingsField extends WPSettingsSection {
 				foreach ($this->Options AS $option_index => $option) {
 					?>
 					<p>
-						<input type="radio" name="<?php esc_attr( $this->InputName[$index] ) ?>" value="<? esc_attr( $option->Value )?>" id="<?php esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>" <?php checked($this->CurrentValue[$index], $option->Value) ?>> <label for="<?php esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>"><?php esc_attr( $option->Name ) ?></label>
+						<input type="radio" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" value="<? esc_attr( $option->Value )?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>" <?php checked($this->CurrentValue[$index], $option->Value) ?>> <label for="<?php echo esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>"><?php echo esc_attr( $option->Name ) ?></label>
 					</p>
 					<?php
 				}
