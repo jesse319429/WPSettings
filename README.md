@@ -303,6 +303,8 @@ Todos
 Version history
 ------------
 
+* 1.6.11
+ * Bugfix. Had two places with short php open tags (just <? without "php") as well as missing the "echo".
 * 1.6.10
  * Added $description as 8th parameter in $field = $section->addField(). Will output a <p class="description"> tag below the field HTML. (Can, like Headline, Type, InputName, CurrentValue, HelpText and Placeholder be set using  $field->Description = "Foo Bar" because of the magic __set() funciton).
  * Updated the magic __set() function to always call setX() functions, if they exists, before just setting the value.

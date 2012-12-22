@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6.10
+ * @version 1.6.11
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -10,7 +10,7 @@
 
 
 // Set namespace
-namespace FeedMeAStrayCat\WPSettings_1_6_10;
+namespace FeedMeAStrayCat\WPSettings_1_6_11;
 
 
 /*************************************
@@ -349,6 +349,8 @@ namespace FeedMeAStrayCat\WPSettings_1_6_10;
 	
 	VERSION HISTORY
 	
+	1.6.11
+		Bugfix. Had two places with short php open tags (just <? without "php") as well as missing the "echo".
 	1.6.10
 		Added $description as 8th parameter in $field = $section->addField(). Will output a <p class="description"> tag below
 		the field HTML. (Can, like Headline, Type, InputName, CurrentValue, HelpText and Placeholder be set using 
@@ -1407,7 +1409,7 @@ class WPSettingsField extends WPSettingsSection {
 				continue;
 			}
 			?>
-			<option value="<? esc_attr( $option->Value )?>" id="<?php echo esc_attr( $this->FieldId .'_'.$field_index.'_'.$option_index ) ?>" <?php selected($this->CurrentValue[$field_index], $option->Value) ?>><?php echo esc_attr( $option->Name ) ?></option>
+			<option value="<?php echo esc_attr( $option->Value )?>" id="<?php echo esc_attr( $this->FieldId .'_'.$field_index.'_'.$option_index ) ?>" <?php selected($this->CurrentValue[$field_index], $option->Value) ?>><?php echo esc_attr( $option->Name ) ?></option>
 			<?php
 		}
 	}
@@ -1432,7 +1434,7 @@ class WPSettingsField extends WPSettingsSection {
 				foreach ($this->Options AS $option_index => $option) {
 					?>
 					<p>
-						<input type="radio" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" value="<? esc_attr( $option->Value )?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>" <?php checked($this->CurrentValue[$index], $option->Value) ?>> <label for="<?php echo esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>"><?php echo esc_attr( $option->Name ) ?></label>
+						<input type="radio" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" value="<?php echo esc_attr( $option->Value )?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>" <?php checked($this->CurrentValue[$index], $option->Value) ?>> <label for="<?php echo esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>"><?php echo esc_attr( $option->Name ) ?></label>
 					</p>
 					<?php
 				}
