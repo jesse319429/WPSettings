@@ -472,7 +472,7 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
 class WPSettings {
 	
 	// Version constant
-	const VERSION = "1.6.10";
+	const VERSION = "1.6.11";
 	
 	
 	/**
