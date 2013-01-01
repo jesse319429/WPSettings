@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.6.11
+ * @version 1.7.0
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -10,7 +10,7 @@
 
 
 // Set namespace
-namespace FeedMeAStrayCat\WPSettings_1_6_11;
+namespace FeedMeAStrayCat\WPSettings_1_7_0;
 
 
 /*************************************
@@ -34,17 +34,17 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
  	----------------------------------
  	To enable WPSettings to work on a WordPress site, where multiple plugins or themes uses WPSettings (even though it might not be that common), 
  	a namespace has been added to WPSettings. 
- 	The namespace will always look like this: \FeedMeAStrayCat\WPSettings_1_6_4 (for that specific version).
+ 	The namespace will always look like this: \FeedMeAStrayCat\WPSettings_1_7_0 (for that specific version).
  	
- 	Use it together with if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings')) to only include your WPSettings file with the correct
+ 	Use it together with if (!class_exists('\FeedMeAStrayCat\WPSettings_1_7_0\WPSettings')) to only include your WPSettings file with the correct
  	version if it hasn't already been included.
  	
  	In you code you can use the namespace to call the function/class directly: 
- 		$wp_settings_page = new \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage(...)
+ 		$wp_settings_page = new \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsPage(...)
  	
  	Or you use the "use" statement:
- 		use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
- 		if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings'))
+ 		use \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsPage;
+ 		if (!class_exists('\FeedMeAStrayCat\WPSettings_1_7_0\WPSettings'))
  			require_once('/path/to/wpsettings.php');
  		}
  		$wp_settings_page = new WPSettingsPage(...)
@@ -54,13 +54,12 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
  	
 	A simple example:
 	----------------------------------
-	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
-	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings')) {
+	use \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsPage;
+	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_7_0\WPSettings')) {
 		require_once('/path/to/wpsettings.php');
 	}
 	
 	add_action('admin_menu', 'my_admin_menu');
-	add_action('admin_init', 'my_admin_init');
 	
 	// This will contain the global WPSettingsPage object
 	global $wp_settings_page;
@@ -73,16 +72,20 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
 		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My Menu Title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
 		// Set a id and add a css class so we can change the icon
 		$wp_settings_page->setIcon('my-icon-id', array('my-icon-class'));
-	}
-	
-	function my_admin_init() {
-		global $wp_settings_page;
 		
 		// Adds a config section
 		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
 		
 		// Adds a text input
 		$section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
+		
+		// Adds a textarea
+		$field = $section->addField('textarea_value', 'Textarea', 'textarea', 'my_options[textarea]', 'Default textarea value', 'Prefixed help text');
+		$field->setSize(200, 80);
+		
+		// Adds a wysiwyg
+		$wysiwyg = $section->addField('wysiwyg_value', 'Test wysiwyg', 'wysiwyg', 'my_options[wysiwyg]', 'my_options[wysiwyg]', 'Wysiwyg help text');
+		$wysiwyg->setSettings(array('textarea_rows' => 5));
 		
 		// Adds three checkboxes
 		$section->addField('test_checkboxes', 'Select cake', 'checkbox', array('my_options[cake_1]', 'my_options[cake_2]', 'my_options[cake_3]'), array(false, false, false), array('Cake 1', 'Cake 2', 'Cake 3'));
@@ -125,13 +128,12 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
 	All the regular WPSettings features works on a sub page. The sub page is put as a sub menu
 	page link in the WP menu.
 	----------------------------------
-	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
-	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings')) {
+	use \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsPage;
+	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_7_0\WPSettings')) {
 		require_once('/path/to/wpsettings.php');
 	}
 	
 	add_action('admin_menu', 'my_admin_menu');
-	add_action('admin_init', 'my_admin_init');
 	
 	// This will contain the global WPSettingsPage object
 	global $wp_settings_page, $wp_settings_sub_page;
@@ -146,10 +148,6 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
 		
 		// Create a sub page
 		$wp_settings_sub_page = $wp_settings_page->addSubPage('My subpage', 'Subtitle', 'My menu subtitle', 'manage_options', 'my_unique_subpage_slug', 'my_admin_subpage_output');
-	}
-	
-	function my_admin_init() {
-		global $wp_settings_page, $wp_settings_sub_page;
 		
 		// Create sections and so on ...
 	}
@@ -174,14 +172,13 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
 	Through WPSettingsField->addFilter() you can add filters that uses the built in WP filtes api. Send in which type of filter
 	you want to use, which must be one of the WPSettingsField::FILTER_ constants, the callback function and a priority integer.
 	----------------------------------
-	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
-	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsField;
-	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings')) {
+	use \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsPage;
+	use \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsField;
+	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_7_0\WPSettings')) {
 		require_once('/path/to/wpsettings.php');
 	}
 	
 	add_action('admin_menu', 'my_admin_menu');
-	add_action('admin_init', 'my_admin_init');
 	
 	// This will contain the global WPSettingsPage object
 	global $wp_settings_page;
@@ -192,10 +189,6 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
 		
 		// Create a settings page
 		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
-	}
-	
-	function my_admin_init() {
-		global $wp_settings_page;
 		
 		// Adds a config section
 		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
@@ -229,13 +222,12 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
 	that will be called after the settings sections in the order they where added. If you want to input custom form elements, you
 	need to store them by your self using the "wps_before_update" action.
 	----------------------------------
-	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
-	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings')) {
+	use \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsPage;
+	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_7_0\WPSettings')) {
 		require_once('/path/to/wpsettings.php');
 	}
 	
 	add_action('admin_menu', 'my_admin_menu');
-	add_action('admin_init', 'my_admin_init');
 	
 	// This will contain the global WPSettingsPage object
 	global $wp_settings_page;
@@ -246,10 +238,6 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
 		
 		// Create a settings page
 		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
-	}
-	
-	function my_admin_init() {
-		global $wp_settings_page;
 		
 		// Adds a config section
 		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
@@ -285,6 +273,10 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
 	
 	"text"
 		A standard text input type. Sanitized with $wpdb->escape()
+	"textarea"
+		A textarea input type. Sanitized with $wpdb->escape(). Set size with $field->setSize(int $width, int $height)
+	"wysiwyg"
+		A What You See Is What You Get editor using the built in wp_editor() function. Set settings args with $field->setSettings()
 	"url"
 		A URL text. Sanitized with esc_url()
 	"int"
@@ -344,11 +336,31 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
 	1) Add more types :)
 	2) Add html5 style input boxes (as well as some setting to create html or xhtml type inputs)
 	3) Add more filters and actions
+	
+	
+	
+	IMPORTANT NOTES
+	
+	1.7.0 - 2013-01-01
+		In WordPress 3.5 it seams like a change was made on ajax calls where the admin_menu action isn't triggered which 
+		would cause problems with media upload if you follow the old examples using admin_menu to setup the WPSettingsPage
+		object and admin_init to register the settings page fields.
+		
+		The easiest solution is to only use the admin_menu action and setup everything on that action. Another way would 
+		be to make sure that your $wp_settings_page variable is an object before moving on in admin_init.
+		
+		The examples have been updated to reflect this in 1.7.0.
 		
 		
 	
 	VERSION HISTORY
 	
+	1.7.0
+		Fixed div container width on output regular text field
+		Added "textare" as field type. Set size using $field->setSize(int $width, int $height).
+		Added "wysiwyg" as field type. Set settings using $field->setSettings(array $settings)
+		Changed examples due to changes in WP 3.5 where admin_menu action isn't triggered (I think) on ajax calls which 
+		created an error with media uploads site wide.
 	1.6.11
 		Bugfix. Had two places with short php open tags (just <? without "php") as well as missing the "echo".
 	1.6.10
@@ -472,7 +484,7 @@ namespace FeedMeAStrayCat\WPSettings_1_6_11;
 class WPSettings {
 	
 	// Version constant
-	const VERSION = "1.6.11";
+	const VERSION = "1.7.0";
 	
 	
 	/**
@@ -759,7 +771,7 @@ class WPSettingsPage extends WPSettings {
 	 * @param array $input
 	 */
 	public function sanitize($input) {
-		
+	
 		// Create new input
 		$new_input = array();
 	
@@ -1009,6 +1021,14 @@ class WPSettingsSection extends WPSettings {
 		elseIf ($type == "radio") {
 			$field = new WPSettingsFieldRadio($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description);
 		}
+		// Create textarea
+		elseIf ($type == "textarea") {
+			$field = new WPSettingsFieldTextArea($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description);
+		}
+		// Create WYSIWYG
+		elseIf ($type == "wysiwyg") {
+			$field = new WPSettingsFieldWYSIWYG($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description);
+		}
 		// Create any other type
 		else {
 			$field = new WPSettingsField($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description);
@@ -1096,30 +1116,38 @@ class WPSettingsField extends WPSettingsSection {
 			// Drop down
 			case "dropdown":
 				$this->_outputDropDownField();
-			break;
+				break;
 			// Radio
 			case "radio":
 				$this->_outputRadioField();
-			break;
+				break;
 			// Checbox
 			case "checkbox":
 				$this->_outputCheckboxField();
-			break;
+				break;
 			// Int
 			case "int":
 				$this->_outputTextField();
-			break;
+				break;
 			// Hex color
 			case "hex_color":
 				$this->_outputHexColorField();
-			break;
+				break;
+			// Textarea
+			case "textarea":
+				$this->_outputTextArea();
+				break;
+			// WYSIWYG
+			case "wysiwyg":
+				$this->_outputWYSIWYG();
+				break;
 			// URL
 			case "url":
 			// Regular text field
 			case "text":
 			default:
 				$this->_outputTextField();
-			break;
+				break;
 		
 		}
 	}
@@ -1171,22 +1199,24 @@ class WPSettingsField extends WPSettingsSection {
 		switch ($this->Type) {
 			case "checkbox":
 				$new_value = $this->_sanitizeCheckbox($value);
-			break;
+				break;
 			case "int":
 				$new_value = $this->_sanitizeInt($value);
-			break;
+				break;
 			case "url":
 				$new_value = $this->_sanitizeURL($value);
-			break;
+				break;
 			case "hex_color":
 				$new_value = $this->_sanitizeHexColor($value);
-			break;
+				break;
+			case "textarea":
+			case "wysiwyg":
 			case "dropdown":
 			case "radio":
 			case "text":
 			default:
 				$new_value = $this->_sanitizeText($value);
-			break;
+				break;
 		}
 		
 		// Do filter
@@ -1268,11 +1298,60 @@ class WPSettingsField extends WPSettingsSection {
 				<?php
 			}
 			?>
-			<div style="width: 150px; float: left;">
-				<input type="text" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo esc_attr( $this->CurrentValue[$index] ) ?>" <?php if ($this->Placeholder[$index]): ?>placeholder="<?php echo esc_attr($this->Placeholder[$index]) ?>"<?php endif; ?> style="width: <?php echo $width ?>px;" >
+			<div style="width: <?php echo $width ?>px; float: left;">
+				<input type="text" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo esc_attr( $this->CurrentValue[$index] ) ?>" <?php if ($this->Placeholder[$index]): ?>placeholder="<?php echo esc_attr($this->Placeholder[$index]) ?>"<?php endif; ?> style="width: <?php echo $width ?>px;">
 			</div>
 			<div style="clear: both;"></div>
 			<?php
+			
+			$this->_outputDescription($index);
+			
+		}
+	}
+	
+	/**
+	 * Output field - Type "textarea"
+	 */
+	private function _outputTextArea() {
+		foreach ($this->InputName AS $index => $input_name) {
+			
+			$width = (int)($this->Width ? $this->Width:300);
+			$height = (int)($this->Height ? $this->Height:150);
+			
+			if (isset($this->HelpText[$index]) && $this->HelpText[$index]) {
+				?>
+				<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
+				<?php
+			}
+			?>
+			<div style="width: <?php echo $width ?>px; float: left;">
+				<textarea name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" style="width: <?php echo $width ?>px; height: <?php  echo $height ?>px;"><?php echo esc_html( $this->CurrentValue[$index] ) ?></textarea>
+			</div>
+			<div style="clear: both;"></div>
+			<?php
+			
+			$this->_outputDescription($index);
+			
+		}
+	}
+	
+	/**
+	 * Output field - Type "wysiwyg"
+	 */
+	private function _outputWYSIWYG() {
+		foreach ($this->InputName AS $index => $input_name) {
+			
+			?>
+			<div id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>">
+				<?php wp_editor( stripslashes($this->CurrentValue[$index]), esc_attr( $this->InputName[$index] ), $this->Settings ) ?>
+			</div>
+			<?php
+			
+			if (isset($this->HelpText[$index]) && $this->HelpText[$index]) {
+				?>
+				<p><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></p>
+				<?php
+			}
 			
 			$this->_outputDescription($index);
 			
@@ -1294,7 +1373,7 @@ class WPSettingsField extends WPSettingsSection {
 			}
 			?>
 			<div style="width: 150px; float: left;">
-				# <input type="text" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo esc_attr( $this->CurrentValue[$index] ) ?>" style="width: <?php echo $width ?>px;" >
+				# <input type="text" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo esc_attr( $this->CurrentValue[$index] ) ?>" <?php if ($this->Placeholder[$index]): ?> placeholder="<?php echo esc_attr($this->Placeholder[$index]) ?>"<?php endif; ?> style="width: <?php echo $width ?>px;">
 			</div>
 			<div style="clear: both;"></div>
 			<?php
@@ -1597,6 +1676,49 @@ class WPSettingsRadioOption extends WPSettings {
 		$this->Value = $value;
 		$this->Name = $name;	
 		return $this;
+	}
+	
+}
+
+
+
+/**
+ * WP Settings Field Text Area class
+ * @see WPSettingsField
+ */
+class WPSettingsFieldTextArea extends WPSettingsField {
+	
+	public $Width;
+	public $Height;
+	
+	/**
+	 * Set size in pixels
+	 * @param int $width
+	 * @param int $height
+	 */
+	public function setSize($width, $height) {
+		$this->Width = $width;
+		$this->Height = $height;
+	}
+	
+}
+
+
+
+/**
+ * WP Settings Field WYSIWYG class
+ * @see WPSettingsField
+ */
+class WPSettingsFieldWYSIWYG extends WPSettingsField {
+	
+	public $Settings = array();
+	
+	/**
+	 * Set wp_editor $settings array
+	 * @param array $settings
+	 */
+	public function setSettings($settings) {
+		$this->Settings = $settings;
 	}
 	
 }

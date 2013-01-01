@@ -1,5 +1,5 @@
 WPSettings
-=============
+==========
 
 A set of classes to create a WordPress settings page for a Theme or a plugin. (You only need the wpsettings.php file. The readme, license and other files are not required to download and use or distribute).
 
@@ -10,7 +10,7 @@ See more WP Snippets by me here: http://www.feedmeastraycat.net/projects/wordpre
 I do more WP stuff together with Odd Alice: http://oddalice.com/
 
 How to
-------------
+------
 
 ### Important note about namespaces
 To enable WPSettings to work on a WordPress site, where multiple plugins or themes uses WPSettings (even though it might not be that common), a namespace has been added to WPSettings. 
@@ -34,13 +34,12 @@ Just remember to add use statements to all classes that you call directly.
 
 ### A simple example
 
-	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
-	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings')) {
+	use \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsPage;
+	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_7_0\WPSettings')) {
 		require_once('/path/to/wpsettings.php');
 	}
-
+	
 	add_action('admin_menu', 'my_admin_menu');
-	add_action('admin_init', 'my_admin_init');
 	
 	// This will contain the global WPSettingsPage object
 	global $wp_settings_page;
@@ -50,28 +49,32 @@ Just remember to add use statements to all classes that you call directly.
 		global $wp_settings_page;
 		
 		// Create a settings page
-		$wp_settings_page = new WPSettingsPage('My page title', 'My settings page title', 'My Menu Title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
+		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My Menu Title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
 		// Set a id and add a css class so we can change the icon
 		$wp_settings_page->setIcon('my-icon-id', array('my-icon-class'));
-	}
-	
-	function my_admin_init() {
-		global $wp_settings_page;
 		
 		// Adds a config section
 		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
-
+		
 		// Adds a text input
 		$section->addField('test_value', 'Test value', 'text', 'my_options[test]', 'Default value', 'Prefixed help text');
-
+		
+		// Adds a textarea
+		$field = $section->addField('textarea_value', 'Textarea', 'textarea', 'my_options[textarea]', 'Default textarea value', 'Prefixed help text');
+		$field->setSize(200, 80);
+		
+		// Adds a wysiwyg
+		$wysiwyg = $section->addField('wysiwyg_value', 'Test wysiwyg', 'wysiwyg', 'my_options[wysiwyg]', 'my_options[wysiwyg]', 'Wysiwyg help text');
+		$wysiwyg->setSettings(array('textarea_rows' => 5));
+		
 		// Adds three checkboxes
 		$section->addField('test_checkboxes', 'Select cake', 'checkbox', array('my_options[cake_1]', 'my_options[cake_2]', 'my_options[cake_3]'), array(false, false, false), array('Cake 1', 'Cake 2', 'Cake 3'));
-
+		
 		// Adds a dropdown without a option group
 		$dropdown = $section->addField('test_select', 'Select day', 'dropdown', 'my_options[day]', 'mon');
 		$dropdown->addOption('mon', 'Monday');
 		$dropdown->addOption('tues', 'Tuesday');
-
+		
 		// Adds a dropdown with two groups
 		$dropdown = $section->addField('test_select2', 'Select day again', 'dropdown', 'my_options[day2]', 6);
 		// Uncomment this option to get a groupless option in the beginning
@@ -82,7 +85,7 @@ Just remember to add use statements to all classes that you call directly.
 		$optgroup = $dropdown->addOptionGroup('Weekend');
 		$dropdown->addOption(6, 'Saturday', $optgroup);
 		$dropdown->addOption(7, 'Sunday', $optgroup);
-
+		
 		// Adds three "radio" options
 		$radio = $section->addField('test_radio', 'Select month', 'radio', 'my_options[month]', 'jan');
 		$radio->addOption('jan', 'January');
@@ -90,7 +93,7 @@ Just remember to add use statements to all classes that you call directly.
 		$radio->addOption('mar', 'March');
 		
 		// Activate settings
-		$wp_settings_page-> activateSettings();
+		$wp_settings_page->activateSettings();
 	}
 	
 	function my_admin_page_output() {
@@ -98,17 +101,16 @@ Just remember to add use statements to all classes that you call directly.
 		
 		$wp_settings_page->output();
 	}
-
+	
 ### Subpages
 You can add subpages by calling the function addSubPage() on a WPSettingsPage object. All the regular WPSettings features works on a sub page. The sub page is put as a sub menu page link in the WP menu.
 
-	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
-	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings')) {
+	use \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsPage;
+	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_7_0\WPSettings')) {
 		require_once('/path/to/wpsettings.php');
 	}
 	
 	add_action('admin_menu', 'my_admin_menu');
-	add_action('admin_init', 'my_admin_init');
 	
 	// This will contain the global WPSettingsPage object
 	global $wp_settings_page, $wp_settings_sub_page;
@@ -123,10 +125,6 @@ You can add subpages by calling the function addSubPage() on a WPSettingsPage ob
 		
 		// Create a sub page
 		$wp_settings_sub_page = $wp_settings_page->addSubPage('My subpage', 'Subtitle', 'My menu subtitle', 'manage_options', 'my_unique_subpage_slug', 'my_admin_subpage_output');
-	}
-	
-	function my_admin_init() {
-		global $wp_settings_page, $wp_settings_sub_page;
 		
 		// Create sections and so on ...
 	}
@@ -149,14 +147,13 @@ You can add subpages by calling the function addSubPage() on a WPSettingsPage ob
 ### Filters
 Through WPSettingsField->addFilter() you can add filters that uses the built in WP filtes api. Send in which type of filter you want to use, which must be one of the WPSettingsField::FILTER_ constants, the callback function and a priority integer.
 
-	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
-	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsField;
-	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings')) {
+	use \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsPage;
+	use \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsField;
+	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_7_0\WPSettings')) {
 		require_once('/path/to/wpsettings.php');
 	}
 	
 	add_action('admin_menu', 'my_admin_menu');
-	add_action('admin_init', 'my_admin_init');
 	
 	// This will contain the global WPSettingsPage object
 	global $wp_settings_page;
@@ -167,11 +164,7 @@ Through WPSettingsField->addFilter() you can add filters that uses the built in 
 		
 		// Create a settings page
 		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
-	}
-	
-	function my_admin_init() {
-		global $wp_settings_page;
-
+		
 		// Adds a config section
 		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
 		
@@ -201,13 +194,12 @@ Through WPSettingsField->addFilter() you can add filters that uses the built in 
 ### Output Sections
 Output sections can be used to output custom HTML in the end of a settings page. Each output section is a callback function that will be called after the settings sections in the order they where added. If you want to input custom form elements, you need to store them by your self using the "wps_before_update" action.
 
-	use \FeedMeAStrayCat\WPSettings_1_6_4\WPSettingsPage;
-	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_6_4\WPSettings')) {
+	use \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsPage;
+	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_7_0\WPSettings')) {
 		require_once('/path/to/wpsettings.php');
 	}
 	
 	add_action('admin_menu', 'my_admin_menu');
-	add_action('admin_init', 'my_admin_init');
 	
 	// This will contain the global WPSettingsPage object
 	global $wp_settings_page;
@@ -218,10 +210,6 @@ Output sections can be used to output custom HTML in the end of a settings page.
 		
 		// Create a settings page
 		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
-	}
-	
-	function my_admin_init() {
-		global $wp_settings_page;
 		
 		// Adds a config section
 		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
@@ -250,11 +238,13 @@ Output sections can be used to output custom HTML in the end of a settings page.
 
 
 Field types
-------------
+-----------
 
 These are the types that can be used in addField() (the third parameter)
 	
 * "text" - A standard text input type. Sanitized with $wpdb->escape()
+* "textarea" - A textarea input type. Sanitized with $wpdb->escape(). Set size with $field->setSize(int $width, int $height)
+* "wysiwyg" - A What You See Is What You Get editor using the built in wp_editor() function. Set settings args with $field->setSettings()
 * "url" - A URL text. Sanitized with esc_url()
 * "int" - A integer. Sanitized with (int)
 * "checkbox" - A checkbox, sanitizes to save 1 or 0
@@ -264,7 +254,7 @@ These are the types that can be used in addField() (the third parameter)
 
 
 Filters
-------------
+-------
 	
 These filters are available
 	
@@ -276,7 +266,7 @@ These filters are available
 
 
 Actions
-------------
+-------
 	
 These are the custom actions that are thrown by WPSettings which can be used to hook in custom features.
 	
@@ -293,16 +283,35 @@ Requirements
 
 
 Todos
-------------
+-----
 	
 1. Add more types :)
 2. Add html5 style input boxes (as well as some setting to create html or xhtml type inputs)
 3. Add more filters and actions
+
+
+Important notes
+---------------
+
+### 1.7.0 - 2013-01-01
+In WordPress 3.5 it seams like a change was made on ajax calls where the admin_menu action isn't triggered which 
+would cause problems with media upload if you follow the old examples using admin_menu to setup the WPSettingsPage
+object and admin_init to register the settings page fields.
+
+The easiest solution is to only use the admin_menu action and setup everything on that action. Another way would 
+be to make sure that your $wp_settings_page variable is an object before moving on in admin_init.
+
+The examples have been updated to reflect this in 1.7.0.
 		
 		
 Version history
-------------
+---------------
 
+* 1.7.0
+ * Fixed div container width on output regular text field
+ * Added "textare" as field type. Set size using $field->setSize(int $width, int $height).
+ * Added "wysiwyg" as field type. Set settings using $field->setSettings(array $settings)
+ * Changed examples due to changes in WP 3.5 where admin_menu action isn't triggered (I think) on ajax calls which created an error with media uploads site wide.
 * 1.6.11
  * Bugfix. Had two places with short php open tags (just <? without "php") as well as missing the "echo".
 * 1.6.10
