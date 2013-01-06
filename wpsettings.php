@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.7.0
+ * @version 1.8.0
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -10,7 +10,7 @@
 
 
 // Set namespace
-namespace FeedMeAStrayCat\WPSettings_1_7_0;
+namespace FeedMeAStrayCat\WPSettings_1_8_0;
 
 
 /*************************************
@@ -292,6 +292,38 @@ namespace FeedMeAStrayCat\WPSettings_1_7_0;
 		
 		
 		
+	PAGE TYPES
+	
+		Stand alone - Using $page = new WPSettingsPage() you can create a stand alone page that can contains sub pages
+		using $page->addSubPage().
+		
+		Sub page to Theme section - Use WPSettingsThemePage.
+		
+		Sub page to Dashboard page - Use WPSettingsDashboardPage.
+		
+		Sub page to Posts page - Use WPSettingsPostsPage.
+		
+		Sub page to Media page - Use WPSettingsMediaPage.
+		
+		Sub page to Links page - Use WPSettingsLinksPage.
+		
+		Sub page to Pages page - Use WPSettingsPagesPage.
+		
+		Sub page to Comments page - Use WPSettingsCommentsPage.
+		
+		Sub page to Plugins page - Use WPSettingsPluginsPage.
+		
+		Sub page to Users page - Use WPSettingsUsersPage.
+		
+		Sub page to Management page - Use WPSettingsManagementPage.
+		
+		Sub page to Options page - Use WPSettingsOptionsPage.
+		
+		Note that using $page->addSubPage() on any other page then the stand alone WPSettingsPage() object will throw
+		an exception.
+		
+		
+		
 	FILTERS
 	
 	These filters are available
@@ -355,6 +387,11 @@ namespace FeedMeAStrayCat\WPSettings_1_7_0;
 	
 	VERSION HISTORY
 	
+	1.8.0
+		Added the possibility to create subpages to the available sections using the objects WPSettingsThemePage, 
+		WPSettingsDashboardPage, WPSettingsPostsPage, WPSettingsMediaPage, WPSettingsLinksPage, WPSettingsPagesPage, 
+		WPSettingsCommentsPage, WPSettingsPluginsPage, WPSettingsUsersPage, WPSettingsManagementPage and
+		WPSettingsOptionsPage.
 	1.7.0
 		Fixed div container width on output regular text field
 		Added "textare" as field type. Set size using $field->setSize(int $width, int $height).
@@ -484,7 +521,7 @@ namespace FeedMeAStrayCat\WPSettings_1_7_0;
 class WPSettings {
 	
 	// Version constant
-	const VERSION = "1.7.0";
+	const VERSION = "1.8.0";
 	
 	
 	/**
@@ -565,6 +602,7 @@ class WPSettings {
 class WPSettingsPage extends WPSettings {
 
 	public $Id;
+	public $IsStandalonePage = true;
 	
 	protected $Title;
 	protected $Subtitle;
@@ -592,7 +630,6 @@ class WPSettingsPage extends WPSettings {
 	 * @return WPSettingsPage
 	 */
 	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, $icon_url='', $position=null) {
-		
 		wp_enqueue_script("jquery");
 	
 		$this->Id = $menu_slug;
@@ -601,7 +638,9 @@ class WPSettingsPage extends WPSettings {
 		$this->Subtitle = $page_subtitle;
 		$this->MenuSlug = $menu_slug;
 
-		add_menu_page($page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position);
+		if ($this->IsStandalonePage) {
+			add_menu_page($page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position);
+		}
 		
 		return $this;
 		
@@ -618,6 +657,11 @@ class WPSettingsPage extends WPSettings {
 	 * @return WPSettingsPage
 	 */
 	public function addSubPage($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+		
+		// Don't allow on anything but stand alone pages
+		if (!$this->IsStandalonePage) {
+			throw new \Exception("Sub pages can not be added to this page type.");
+		}
 		
 		// Create sub page as.
 		$subpage = new WPSettingsSubPage(&$this, $page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function);
@@ -891,6 +935,413 @@ class WPSettingsPage extends WPSettings {
 		<?php
 	}
 	
+
+}
+
+
+
+/**
+ * WPSettings Theme Page class
+ * @see WPSettingsPage
+ */
+class WPSettingsThemePage extends WPSettingsPage {
+
+	public $IsStandalonePage = false;
+
+	/**
+	 * Create a WP Settings Page in the Theme section
+	 * @todo Allow both menu page and options page?
+	 * @param string $page_title 
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array $function
+	 * @param string $icon_url Optional
+	 * @param int|null $position Optional
+	 * @return WPSettingsPage
+	 */
+	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+		
+		// Call parent constructor to setup everything
+		parent::__construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, null, null);
+		
+		// Add theme page
+		add_theme_page($page_title, $menu_title, $capability, $menu_slug, $function);
+		
+		return $this;
+
+	}
+
+}
+
+
+
+/**
+ * WPSettings Dashboard Page class
+ * @see WPSettingsPage
+ */
+class WPSettingsDashboardPage extends WPSettingsPage {
+
+	public $IsStandalonePage = false;
+
+	/**
+	 * Create a WP Settings Page in the Dashboard section
+	 * @todo Allow both menu page and options page?
+	 * @param string $page_title
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array $function
+	 * @param string $icon_url Optional
+	 * @param int|null $position Optional
+	 * @return WPSettingsPage
+	 */
+	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+
+		// Call parent constructor to setup everything
+		parent::__construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, null, null);
+
+		// Add dashboard page
+		add_dashboard_page($page_title, $menu_title, $capability, $menu_slug, $function);
+
+		return $this;
+
+	}
+
+}
+
+
+
+/**
+ * WPSettings Posts Page class
+ * @see WPSettingsPage
+ */
+class WPSettingsPostsPage extends WPSettingsPage {
+
+	public $IsStandalonePage = false;
+
+	/**
+	 * Create a WP Settings Page in the Posts section
+	 * @todo Allow both menu page and options page?
+	 * @param string $page_title
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array $function
+	 * @param string $icon_url Optional
+	 * @param int|null $position Optional
+	 * @return WPSettingsPage
+	 */
+	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+
+		// Call parent constructor to setup everything
+		parent::__construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, null, null);
+
+		// Add posts page
+		add_posts_page($page_title, $menu_title, $capability, $menu_slug, $function);
+
+		return $this;
+
+	}
+
+}
+
+
+
+/**
+ * WPSettings Media Page class
+ * @see WPSettingsPage
+ */
+class WPSettingsMediaPage extends WPSettingsPage {
+
+	public $IsStandalonePage = false;
+
+	/**
+	 * Create a WP Settings Page in the Media section
+	 * @todo Allow both menu page and options page?
+	 * @param string $page_title
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array $function
+	 * @param string $icon_url Optional
+	 * @param int|null $position Optional
+	 * @return WPSettingsPage
+	 */
+	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+
+		// Call parent constructor to setup everything
+		parent::__construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, null, null);
+
+		// Add media page
+		add_media_page($page_title, $menu_title, $capability, $menu_slug, $function);
+
+		return $this;
+
+	}
+
+}
+
+
+
+/**
+ * WPSettings Links Page class
+ * @see WPSettingsPage
+ */
+class WPSettingsLinksPage extends WPSettingsPage {
+
+	public $IsStandalonePage = false;
+
+	/**
+	 * Create a WP Settings Page in the Links section
+	 * @todo Allow both menu page and options page?
+	 * @param string $page_title
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array $function
+	 * @param string $icon_url Optional
+	 * @param int|null $position Optional
+	 * @return WPSettingsPage
+	 */
+	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+
+		// Call parent constructor to setup everything
+		parent::__construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, null, null);
+
+		// Add links page
+		add_links_page($page_title, $menu_title, $capability, $menu_slug, $function);
+
+		return $this;
+
+	}
+
+}
+
+
+
+/**
+ * WPSettings Pages Page class
+ * @see WPSettingsPage
+ */
+class WPSettingsPagesPage extends WPSettingsPage {
+
+	public $IsStandalonePage = false;
+
+	/**
+	 * Create a WP Settings Page in the Pages section
+	 * @todo Allow both menu page and options page?
+	 * @param string $page_title
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array $function
+	 * @param string $icon_url Optional
+	 * @param int|null $position Optional
+	 * @return WPSettingsPage
+	 */
+	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+
+		// Call parent constructor to setup everything
+		parent::__construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, null, null);
+
+		// Add pages page
+		add_pages_page($page_title, $menu_title, $capability, $menu_slug, $function);
+
+		return $this;
+
+	}
+
+}
+
+
+
+/**
+ * WPSettings Comments Page class
+ * @see WPSettingsPage
+ */
+class WPSettingsCommentsPage extends WPSettingsPage {
+
+	public $IsStandalonePage = false;
+
+	/**
+	 * Create a WP Settings Page in the Comments section
+	 * @todo Allow both menu page and options page?
+	 * @param string $page_title
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array $function
+	 * @param string $icon_url Optional
+	 * @param int|null $position Optional
+	 * @return WPSettingsPage
+	 */
+	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+
+		// Call parent constructor to setup everything
+		parent::__construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, null, null);
+
+		// Add comments page
+		add_comments_page($page_title, $menu_title, $capability, $menu_slug, $function);
+
+		return $this;
+
+	}
+
+}
+
+
+
+/**
+ * WPSettings Plugins Page class
+ * @see WPSettingsPage
+ */
+class WPSettingsPluginsPage extends WPSettingsPage {
+
+	public $IsStandalonePage = false;
+
+	/**
+	 * Create a WP Settings Page in the Plugins section
+	 * @todo Allow both menu page and options page?
+	 * @param string $page_title
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array $function
+	 * @param string $icon_url Optional
+	 * @param int|null $position Optional
+	 * @return WPSettingsPage
+	 */
+	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+
+		// Call parent constructor to setup everything
+		parent::__construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, null, null);
+
+		// Add plugins page
+		add_plugins_page($page_title, $menu_title, $capability, $menu_slug, $function);
+
+		return $this;
+
+	}
+
+}
+
+
+
+/**
+ * WPSettings Users Page class
+ * @see WPSettingsPage
+ */
+class WPSettingsUsersPage extends WPSettingsPage {
+
+	public $IsStandalonePage = false;
+
+	/**
+	 * Create a WP Settings Page in the Users section
+	 * @todo Allow both menu page and options page?
+	 * @param string $page_title
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array $function
+	 * @param string $icon_url Optional
+	 * @param int|null $position Optional
+	 * @return WPSettingsPage
+	 */
+	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+
+		// Call parent constructor to setup everything
+		parent::__construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, null, null);
+
+		// Add users page
+		add_users_page($page_title, $menu_title, $capability, $menu_slug, $function);
+
+		return $this;
+
+	}
+
+}
+
+
+
+/**
+ * WPSettings Management Page class
+ * @see WPSettingsPage
+ */
+class WPSettingsManagementPage extends WPSettingsPage {
+
+	public $IsStandalonePage = false;
+
+	/**
+	 * Create a WP Settings Page in the Management section
+	 * @todo Allow both menu page and options page?
+	 * @param string $page_title
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array $function
+	 * @param string $icon_url Optional
+	 * @param int|null $position Optional
+	 * @return WPSettingsPage
+	 */
+	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+
+		// Call parent constructor to setup everything
+		parent::__construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, null, null);
+
+		// Add management page
+		add_management_page($page_title, $menu_title, $capability, $menu_slug, $function);
+
+		return $this;
+
+	}
+
+}
+
+
+
+/**
+ * WPSettings Options Page class
+ * @see WPSettingsPage
+ */
+class WPSettingsOptionsPage extends WPSettingsPage {
+
+	public $IsStandalonePage = false;
+
+	/**
+	 * Create a WP Settings Options in the Management section
+	 * @todo Allow both menu page and options page?
+	 * @param string $page_title
+	 * @param string $page_subtitle
+	 * @param string $menu_title
+	 * @param string $capability
+	 * @param string $menu_slug
+	 * @param string|array $function
+	 * @param string $icon_url Optional
+	 * @param int|null $position Optional
+	 * @return WPSettingsPage
+	 */
+	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function) {
+
+		// Call parent constructor to setup everything
+		parent::__construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, null, null);
+
+		// Add options page
+		add_options_page($page_title, $menu_title, $capability, $menu_slug, $function);
+
+		return $this;
+
+	}
 
 }
 

@@ -253,6 +253,38 @@ These are the types that can be used in addField() (the third parameter)
 * "hex_color" - A HTML hex color value. Sanitize with allowed hex valued colors.
 
 
+Page types
+----------
+	
+Stand alone - Using $page = new WPSettingsPage() you can create a stand alone page that can contains sub pages
+using $page->addSubPage().
+
+Sub page to Theme section - Use WPSettingsThemePage.
+
+Sub page to Dashboard page - Use WPSettingsDashboardPage.
+
+Sub page to Posts page - Use WPSettingsPostsPage.
+
+Sub page to Media page - Use WPSettingsMediaPage.
+
+Sub page to Links page - Use WPSettingsLinksPage.
+
+Sub page to Pages page - Use WPSettingsPagesPage.
+
+Sub page to Comments page - Use WPSettingsCommentsPage.
+
+Sub page to Plugins page - Use WPSettingsPluginsPage.
+
+Sub page to Users page - Use WPSettingsUsersPage.
+
+Sub page to Management page - Use WPSettingsManagementPage.
+
+Sub page to Options page - Use WPSettingsOptionsPage.
+
+Note that using $page->addSubPage() on any other page then the stand alone WPSettingsPage() object will throw
+an exception.
+
+
 Filters
 -------
 	
@@ -307,6 +339,8 @@ The examples have been updated to reflect this in 1.7.0.
 Version history
 ---------------
 
+* 1.8.0
+ * Added the possibility to create subpages to the available sections using the objects WPSettingsThemePage, WPSettingsDashboardPage, WPSettingsPostsPage, WPSettingsMediaPage, WPSettingsLinksPage, WPSettingsPagesPage, WPSettingsCommentsPage, WPSettingsPluginsPage, WPSettingsUsersPage, WPSettingsManagementPage and WPSettingsOptionsPage.
 * 1.7.0
  * Fixed div container width on output regular text field
  * Added "textare" as field type. Set size using $field->setSize(int $width, int $height).
