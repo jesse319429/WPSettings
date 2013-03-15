@@ -339,6 +339,8 @@ The examples have been updated to reflect this in 1.7.0.
 Version history
 ---------------
 
+* 1.8.1
+ * Removed one instance of call-time pass-by-reference
 * 1.8.0
  * Added the possibility to create subpages to the available sections using the objects WPSettingsThemePage, WPSettingsDashboardPage, WPSettingsPostsPage, WPSettingsMediaPage, WPSettingsLinksPage, WPSettingsPagesPage, WPSettingsCommentsPage, WPSettingsPluginsPage, WPSettingsUsersPage, WPSettingsManagementPage and WPSettingsOptionsPage.
 * 1.7.0

@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.8.0
+ * @version 1.8.1
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -10,7 +10,7 @@
 
 
 // Set namespace
-namespace FeedMeAStrayCat\WPSettings_1_8_0;
+namespace FeedMeAStrayCat\WPSettings_1_8_1;
 
 
 /*************************************
@@ -387,6 +387,8 @@ namespace FeedMeAStrayCat\WPSettings_1_8_0;
 	
 	VERSION HISTORY
 	
+	1.8.1
+		Removed one instance of call-time pass-by-reference
 	1.8.0
 		Added the possibility to create subpages to the available sections using the objects WPSettingsThemePage, 
 		WPSettingsDashboardPage, WPSettingsPostsPage, WPSettingsMediaPage, WPSettingsLinksPage, WPSettingsPagesPage, 
@@ -521,7 +523,7 @@ namespace FeedMeAStrayCat\WPSettings_1_8_0;
 class WPSettings {
 	
 	// Version constant
-	const VERSION = "1.8.0";
+	const VERSION = "1.8.1";
 	
 	
 	/**
@@ -664,7 +666,7 @@ class WPSettingsPage extends WPSettings {
 		}
 		
 		// Create sub page as.
-		$subpage = new WPSettingsSubPage(&$this, $page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function);
+		$subpage = new WPSettingsSubPage($this, $page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function);
 		
 		// Store in this (parent) page array
 		$this->_subpages[$subpage->Id] = &$subpage;
