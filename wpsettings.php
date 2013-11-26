@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.8.1
+ * @version 1.9.0
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -10,7 +10,7 @@
 
 
 // Set namespace
-namespace FeedMeAStrayCat\WPSettings_1_8_1;
+namespace FeedMeAStrayCat\WPSettings_1_9_0;
 
 
 /*************************************
@@ -169,7 +169,7 @@ namespace FeedMeAStrayCat\WPSettings_1_8_1;
 	----------------------------------
 	
 	Filters:
-	Through WPSettingsField->addFilter() you can add filters that uses the built in WP filtes api. Send in which type of filter
+	Through WPSettingsField->addFilter() you can add filters that uses the built in WP filters api. Send in which type of filter
 	you want to use, which must be one of the WPSettingsField::FILTER_ constants, the callback function and a priority integer.
 	----------------------------------
 	use \FeedMeAStrayCat\WPSettings_1_7_0\WPSettingsPage;
@@ -265,6 +265,63 @@ namespace FeedMeAStrayCat\WPSettings_1_8_1;
 	}
 	----------------------------------
 	
+	Adding custom style and attributes:
+	You can set custom style and attribute using $field->setAttribute() and $field->setStyle(). The value you set should be an 
+	array of associative arrays. Even if you only have one don't add multiple fields in one go as in the example below.
+	It can also be done one attribute or style at a time using $field->addAttribute() or $field->addStyle() where the first two
+	parameters are the attribute/style name and value and the third parameter is the index for which field to set it to. 
+	Attributes can also be set directly into $section->addField() as the 9th parameter and styles as the 10th.
+	----------------------------------
+	use \FeedMeAStrayCat\WPSettings_1_9_0\WPSettingsPage;
+	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_9_0\WPSettings')) {
+		require_once('/path/to/wpsettings.php');
+	}
+	
+	add_action('admin_menu', 'my_admin_menu');
+	
+	// This will contain the global WPSettingsPage object
+	global $wp_settings_page;
+	$wp_settings_page = null;
+	
+	function my_admin_menu() {
+		global $wp_settings_page;
+		
+		// Create a settings page
+		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
+		
+		// Adds a config section
+		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
+		
+		// Adds a text input
+		$field = $section->addField('test_value', 'Test', 'text', array('my_options[test]', 'my_options[test2]'));
+		$field->setAttributes(array(array('readonly' => 'readonly'), array('maxlength' => 10));
+		$field->setStyle(array(array('wifth' => '200px'), array('width' => '300px'));
+	
+		// Can also be done like this:
+		$field = $section->addField('test_value2', 'Test 2', 'text', array('my_options[test3]', 'my_options[test4]'));
+		$field->addAttribute('readonly', 'readonly', 0);
+		$field->addAttribute('maxlength', '10', 1);
+		$field->addStyle('width', '200px', 0);
+		$field->addStyle('width', '300px', 1);
+		
+		// Or for only one value
+		$field = $section->addField('test_value3', 'Test ', 'text', 'my_options[test5]');
+		$field->addAttribute('readonly', 'readonly');
+		$field->addAttribute('maxlength', '10');
+		$field->addStyle('width', '200px');
+		$field->addStyle('border', '1px solid red');
+		
+		// Activate settings
+		$wp_settings_page->activateSettings();
+	}
+	
+	function my_admin_page_output() {
+		global $wp_settings_page;
+		
+		$wp_settings_page->output();
+	}
+	----------------------------------
+	
 	
 	
 	FIELD TYPES
@@ -272,9 +329,9 @@ namespace FeedMeAStrayCat\WPSettings_1_8_1;
 	These are the types that can be used in addField() (the third parameter)
 	
 	"text"
-		A standard text input type. Sanitized with $wpdb->escape()
+	A standard text input type. Sanitized with esc_sql()
 	"textarea"
-		A textarea input type. Sanitized with $wpdb->escape(). Set size with $field->setSize(int $width, int $height)
+		A textarea input type. Sanitized with esc_sql(). Set size with $field->setSize(int $width, int $height)
 	"wysiwyg"
 		A What You See Is What You Get editor using the built in wp_editor() function. Set settings args with $field->setSettings()
 	"url"
@@ -284,9 +341,9 @@ namespace FeedMeAStrayCat\WPSettings_1_8_1;
 	"checkbox"
 		A checkbox, sanitizes to save 1 or 0
 	"dropdown"
-		A select type dropdown. Sanitizes with standard $wpdb->escape()
+		A select type dropdown. Sanitizes with standard esc_sql()
 	"radio"
-		A set of radio options. Sanitizes with the standard $wpdb->escape()
+		A set of radio options. Sanitizes with the standard esc_sql()
 	"hex_color"
 		A HTML hex color value. Sanitize with allowed hex valued colors.
 		
@@ -324,6 +381,16 @@ namespace FeedMeAStrayCat\WPSettings_1_8_1;
 		
 		
 		
+	NETWORK ADMIN
+	
+		From version 1.9.0 there should be no issues creating a network admin settings page. Settings are stored using 
+		update_site_option() and must therefor be fetched using get_site_option() instead of get_option().
+		
+		http://codex.wordpress.org/Function_Reference/update_site_option
+		http://codex.wordpress.org/Function_Reference/get_site_option
+	
+	
+	
 	FILTERS
 	
 	These filters are available
@@ -345,7 +412,7 @@ namespace FeedMeAStrayCat\WPSettings_1_8_1;
 	
 	wps_before_update
 		Parameters: 0
-		Called after validation. Before update.
+		Called after validation. Before update. Note that this action is triggered once for each field.
 		
 		
 		
@@ -373,6 +440,18 @@ namespace FeedMeAStrayCat\WPSettings_1_8_1;
 	
 	IMPORTANT NOTES
 	
+	1.9.0 - 2013-11-06
+		I've noticed that the wps_before_update action was only activated when input names existed, and when it was an 
+		array, because the action was just triggered from WPSettingsPage->sanitize().
+		The action has been moved to WPSettingsField->sanitize() so it will get triggered on regular input names as well.
+		This means that it will be triggered once for each added input.
+				
+		I've also noticed that there is no way to only use output settings and store stuff using the regular WPSettings
+		form. You have to do a output setting that contains the form it self. Or just add some setting through WPSetting
+		and the specials through a output section.
+		
+		WPSettings can now also create network admin pages. Fields are stored using update_site_option().
+	
 	1.7.0 - 2013-01-01
 		In WordPress 3.5 it seams like a change was made on ajax calls where the admin_menu action isn't triggered which 
 		would cause problems with media upload if you follow the old examples using admin_menu to setup the WPSettingsPage
@@ -387,8 +466,24 @@ namespace FeedMeAStrayCat\WPSettings_1_8_1;
 	
 	VERSION HISTORY
 	
+	1.9.0
+		Changes to wps_before_update action, will now trigger once on each added field
+		Settings pages are now also functional on network admin pages
+		Added action to correctly enqueue jquery on admin pages
+		Replaced deprecated $wpdb->escape() with esc_sql()
+		Added $field->setCurrentValue()
+		Added $field->setHelpText()
+		Added $field->setPlaceholder()
+		Added $field->setDescription()
+		Added $field->setAttributes()
+		Added $field->addAttribute()
+		Added $field->setStyle()
+		Added $field->addStyle()
+		Input fields (not checkbox, radio buttons or the wysiwyg) can have added attributes and custom style
 	1.8.1
-		Removed one instance of call-time pass-by-reference
+		Removed &$this pass by reference (deprecated)
+		Bugfix. Couldn't use only output sections.
+		Only output form if there are any settings sections.
 	1.8.0
 		Added the possibility to create subpages to the available sections using the objects WPSettingsThemePage, 
 		WPSettingsDashboardPage, WPSettingsPostsPage, WPSettingsMediaPage, WPSettingsLinksPage, WPSettingsPagesPage, 
@@ -516,6 +611,14 @@ namespace FeedMeAStrayCat\WPSettings_1_8_1;
 		
 *************************************/
 
+
+
+// Add action to enqueue jQuery
+add_action('admin_enqueue_scripts', array('\FeedMeAStrayCat\WPSettings_1_9_0\WPSettingsPage', 'admin_enqueue_scripts'));
+// Add action for Network Admin page edits
+add_action('network_admin_edit_wps', array('\FeedMeAStrayCat\WPSettings_1_9_0\WPSettingsPage', 'network_admin_edit'));
+
+
 	
 /**
  * WP Settings base class - Extended by WPSettingsPage, WPSettingsSection and WPSettingsField
@@ -523,7 +626,7 @@ namespace FeedMeAStrayCat\WPSettings_1_8_1;
 class WPSettings {
 	
 	// Version constant
-	const VERSION = "1.8.1";
+	const VERSION = "1.9.0";
 	
 	
 	/**
@@ -617,6 +720,8 @@ class WPSettingsPage extends WPSettings {
 	private $_pageIconClass = array();
 	private $_pageIconId;
 	
+	protected static $RegisteredInputNames = array();
+	
 	
 	/**
 	 * Create a WP Settings Page
@@ -632,8 +737,7 @@ class WPSettingsPage extends WPSettings {
 	 * @return WPSettingsPage
 	 */
 	public function __construct($page_title, $page_subtitle, $menu_title, $capability, $menu_slug, $function, $icon_url='', $position=null) {
-		wp_enqueue_script("jquery");
-	
+
 		$this->Id = $menu_slug;
 		
 		$this->Title = $page_title;
@@ -680,6 +784,9 @@ class WPSettingsPage extends WPSettings {
 	 * WordPress saves the data
 	 */
 	public function activateSettings() {
+		
+		// Store all registered input names (used by network admin page save)
+		$registered_input_names = array();
 
 		// Start looping through all pages
 		$pages = array_merge(array($this), $this->_subpages);
@@ -703,6 +810,7 @@ class WPSettingsPage extends WPSettings {
 						// Is it's own name, can only work when the name is unique, registers the setting directly
 						// with sanitize on the $field object 
 						else {
+							$registered_input_names[] = $input_name;
 							register_setting($page->Id, $input_name, array($field, 'sanitize'));
 						}
 					}
@@ -714,10 +822,13 @@ class WPSettingsPage extends WPSettings {
 				$array_post_names = array_unique($array_post_names);
 				// Register them for sanitize on the $page object
 				foreach ($array_post_names AS $index => $name) {
+					$registered_input_names[] = $name;
 				 	register_setting($page->Id, $name, array($page, 'sanitize'));
 				}
 			}
 		}
+		
+		self::$RegisteredInputNames[$this->Id] = $registered_input_names;
 		
 	}
 	
@@ -769,6 +880,9 @@ class WPSettingsPage extends WPSettings {
 		if (!$this::$no_footer_text) {
 			add_action('admin_footer_text', array($this, 'outputFooterText'), 50, 1);
 		}
+		// Form action url depending on network or regular admin page
+		$screen = get_current_screen();
+		$form_action = ($screen->is_network ? add_query_arg(array('action' => 'wps', 'id' => $this->Id), network_admin_url('edit.php')):admin_url('options.php'));
 		// Output page
 		?>
 		<div class="wrap">
@@ -782,10 +896,12 @@ class WPSettingsPage extends WPSettings {
 			<?php if ($this->SettingsPageDescription) : ?>
 				<p><?php echo $this->SettingsPageDescription ?></p>
 			<?php endif; ?>
-			<?php if ( !empty($this->Sections )): ?>
-				<form action="options.php" method="post">
-				<?php settings_fields($this->Id); ?>
-				<?php do_settings_sections($this->Id); ?>
+			<?php if ( !empty($this->Sections) || count($this->OutputSections) > 0 ): ?>	
+				<?php if ( !empty($this->Sections) ) : ?>
+					<form action="<?php echo $form_action ?>" method="post">
+					<?php settings_fields($this->Id); ?>
+					<?php do_settings_sections($this->Id); ?>
+				<?php endif; ?>
 				<?php
 				if (count($this->OutputSections) > 0) {
 					foreach ($this->OutputSections AS $index => $section) {
@@ -797,11 +913,15 @@ class WPSettingsPage extends WPSettings {
 						call_user_func($section['callback']);
 					}
 				}
+				if ( !empty($this->Sections) ) :
+					?>
+					<p class="submit">
+						<input name="Submit" type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes', 'wpsettings'); ?>" >
+					</p>
+					</form>
+					<?php
+				endif; 
 				?>
-				<p class="submit">
-					<input name="Submit" type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes', 'wpsettings'); ?>" >
-				</p>
-				</form>
 			<?php endif; ?>
 		</div>
 		<?php
@@ -816,8 +936,7 @@ class WPSettingsPage extends WPSettings {
 	 * by this function, in the loop, as well).
 	 * @param array $input
 	 */
-	public function sanitize($input) {
-	
+	public function sanitize($input) {	
 		// Create new input
 		$new_input = array();
 	
@@ -850,9 +969,6 @@ class WPSettingsPage extends WPSettings {
 				}
 			}
 		}
-
-		// Do update action
-		do_action('wps_before_update');
 
 		return $new_input;
 	}
@@ -937,6 +1053,41 @@ class WPSettingsPage extends WPSettings {
 		<?php
 	}
 	
+	
+	/**
+	 * Action: admin_enqueue_scripts
+	 */
+	public static function admin_enqueue_scripts() {
+		wp_enqueue_script("jquery");
+	}
+	
+	
+	/**
+	 * Action: network_admin_edit_wps
+	 */
+	public static function network_admin_edit() {
+		
+		if (isset($_POST['_wpnonce']) && isset($_GET['id']) && wp_verify_nonce($_POST['_wpnonce'], $_GET['id'].'-options')) {
+		
+			$id = $_GET['id'];
+			if (isset(self::$RegisteredInputNames[$id]) && !empty(self::$RegisteredInputNames[$id])) {
+			
+				foreach (self::$RegisteredInputNames[$id] AS $index) {
+					if (isset($_POST[$index])) {
+						update_site_option($index, $_POST[$index]);
+					}
+				}
+				
+			}
+			
+		}
+		
+		$redirect_url = (isset($_POST['_wp_http_referer']) ? $_POST['_wp_http_referer']:network_admin_url());
+		$redirect_url = add_query_arg(array('settings-updated' => 'true'), $redirect_url);
+
+		wp_redirect($redirect_url);
+		die;
+	}
 
 }
 
@@ -1382,10 +1533,7 @@ class WPSettingsSubPage extends WPSettingsPage {
 		$this->Subtitle = $page_subtitle;
 		$this->MenuSlug = $menu_slug;
 
-		//add_menu_page($page_title, $menu_title, $capability, $menu_slug, $function);
-		//echo $WPSettingsPage->MenuSlug;die;
 		add_submenu_page($WPSettingsPage->MenuSlug, $page_title, $menu_title, $capability, $menu_slug, $function);
-		//add_option_whitelist(array('oaui_login' => array('oa_user_import')));
 		
 		return $this;
 		
@@ -1452,10 +1600,12 @@ class WPSettingsSection extends WPSettings {
 	 * @param string|array $help_text
 	 * @param string|array $placeholder
 	 * @param string|array $description
+	 * @param array $attributes
+	 * @param array $style
 	 * @return WPSettingsField
 	 * @throws Exception
 	 */
-	public function addField($field_id, $headline, $type, $input_name, $current_value='', $help_text='', $placeholder='', $description='') {
+	public function addField($field_id, $headline, $type, $input_name, $current_value='', $help_text='', $placeholder='', $description='', $attributes=array(), $style=array()) {
 		// Validate id
 		if (!preg_match("/^[a-z0-9\-\_]{1,50}$/i", $field_id)) {
 			throw new \Exception("Section id failed to validate");
@@ -1468,23 +1618,23 @@ class WPSettingsSection extends WPSettings {
 		self::$_input_names[] = $input_name;
 		// Create dropdown
 		if ($type == "dropdown") {
-			$field = new WPSettingsFieldDropDown($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description);
+			$field = new WPSettingsFieldDropDown($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description, $attributes, $style);
 		}
 		// Create a radio
 		elseIf ($type == "radio") {
-			$field = new WPSettingsFieldRadio($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description);
+			$field = new WPSettingsFieldRadio($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description, $attributes, $style);
 		}
 		// Create textarea
 		elseIf ($type == "textarea") {
-			$field = new WPSettingsFieldTextArea($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description);
+			$field = new WPSettingsFieldTextArea($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description, $attributes, $style);
 		}
 		// Create WYSIWYG
 		elseIf ($type == "wysiwyg") {
-			$field = new WPSettingsFieldWYSIWYG($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description);
+			$field = new WPSettingsFieldWYSIWYG($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description, $attributes, $style);
 		}
 		// Create any other type
 		else {
-			$field = new WPSettingsField($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description);
+			$field = new WPSettingsField($this, $field_id, $headline, $type, $input_name, $current_value, $help_text, $placeholder, $description, $attributes, $style);
 		}
 		$this->Fields[] = &$field;
 		return $field;
@@ -1512,6 +1662,8 @@ class WPSettingsField extends WPSettingsSection {
 	protected $Placeholder;
 	protected $Description;
 	protected $Events = array();
+	protected $Attributes;
+	protected $Style;
 	
 	const FILTER_UPDATE = "upd";
 	
@@ -1533,9 +1685,11 @@ class WPSettingsField extends WPSettingsSection {
 	 * @param string|array $help_text
 	 * @param string|array $placeholder
 	 * @param string|array $description
+	 * @param array $attributes
+	 * @param array $style
 	 * @return WPSettingsField
 	 */
-	function __construct(WPSettingsSection &$WPSettingsSection, $field_id, $headline, $type, $input_name, $current_value='', $help_text='', $placeholder='', $description='') {
+	function __construct(WPSettingsSection &$WPSettingsSection, $field_id, $headline, $type, $input_name, $current_value='', $help_text='', $placeholder='', $description='', $attributes='', $style='') {
 	
 		$this->Id = $WPSettingsSection->Id;
 		$this->SectionId = $WPSettingsSection->SectionId;
@@ -1544,10 +1698,12 @@ class WPSettingsField extends WPSettingsSection {
 		$this->Type = $type;
 		// Always store them as array, multiple elements can be added foreach field
 		$this->InputName = (is_array($input_name) ? $input_name:array($input_name));
-		$this->CurrentValue = (is_array($current_value) ? $current_value:array($current_value));
-		$this->HelpText = (is_array($help_text) ? $help_text:array($help_text));
-		$this->Placeholder = (is_array($placeholder) ? $placeholder:array($placeholder));
-		$this->Description = (is_array($description) ? $description:array($description));
+		$this->setCurrentValue($current_value);
+		$this->setHelpText($help_text);
+		$this->setPlaceholder($placeholder);
+		$this->setDescription($description);
+		$this->setAttributes($attributes);
+		$this->setStyle($style);
 	
  		add_settings_field($this->FieldId,
 			$this->Headline,
@@ -1634,6 +1790,30 @@ class WPSettingsField extends WPSettingsSection {
 	}
 	
 	/**
+	 * Set current value
+	 * @param string|array $placeholder
+	 */
+	public function setCurrentValue($current_value) {
+		$this->CurrentValue = (is_array($current_value) ? $current_value:array($current_value));
+	}
+	
+	/**
+	 * Set help text
+	 * @param string|array $help_text
+	 */
+	public function setHelpText($help_text) {
+		$this->HelpText = (is_array($help_text) ? $help_text:array($help_text));
+	}
+	
+	/**
+	 * Set placeholder
+	 * @param string|array $placeholder
+	 */
+	public function setPlaceholder($placeholder) {
+		$this->Placeholder = (is_array($placeholder) ? $placeholder:array($placeholder));
+	}
+	
+	/**
 	 * Set description
 	 * @param string|array $description
 	 */
@@ -1642,12 +1822,58 @@ class WPSettingsField extends WPSettingsSection {
 	}
 	
 	/**
+	 * Set attributes - Should be an array of arrays. An array for each field, and an associative array for each attribute
+	 * and it's value. For example: array( array( 'readonly' => 'readonly' ), array( 'maxlength' => 10 ) )	
+	 * @param array $attributes
+	 */
+	public function setAttributes($attributes) {
+		$this->Attributes = $attributes;
+	}
+	
+	/**
+	 * Add attribute
+	 * @param string $name Attribute name
+	 * @param string $value Attribute value
+	 * @param int $index Optional. Set the index for which field the attribute should be added to
+	 */
+	public function addAttribute($name, $value, $index=0) {
+		$index = (int)$index;
+		if (!isset($this->Attributes[$index])) {
+			$this->Attributes[$index] = array();
+		}
+		$this->Attributes[$index][$name] = $value;
+	}
+	
+	/**
+	 * Set style - Should be an array of arrays. An array for each field, and an associative array for each attribute
+	 * and it's value. For example: array( array( 'readonly' => 'readonly' ), array( 'maxlength' => 10 ) )	
+	 * @param array $style
+	 */
+	public function setStyle($style) {
+		$this->Style = $style;
+	}
+	
+	/**
+	 * Add style
+	 * @param string $name Style name
+	 * @param string $value Style value
+	 * @param int $index Optional. Set the index for which field the style should be added to.
+	 */
+	public function addStyle($name, $value, $index=0) {
+		$index = (int)$index;
+		if (!isset($this->Style[$index])) {
+			$this->Style[$index] = array();
+		}
+		$this->Style[$index][$name] = $value;
+	}
+	
+	/**
 	 * Sanitize
 	 * @param mixed $value
 	 * @return $value Returnes sanitized value
 	 */
 	public function sanitize($value) {
-		
+	
 		// Sanitize by type
 		switch ($this->Type) {
 			case "checkbox":
@@ -1671,18 +1897,51 @@ class WPSettingsField extends WPSettingsSection {
 				$new_value = $this->_sanitizeText($value);
 				break;
 		}
-		
+
 		// Do filter
 		if ( has_filter('wps_'.WPSettingsField::FILTER_UPDATE.'_'.$this->FieldId) ) {
 			$return_value = apply_filters('wps_'.WPSettingsField::FILTER_UPDATE.'_'.$this->FieldId, $this, $new_value);
 			if (!is_null($return_value)) {
 				$new_value = $return_value;
 			}
-		 }
-		 
-		 // Return
-		 return $new_value;
+		}
 		
+		// Do update action
+		do_action('wps_before_update');
+		 
+		// Return
+		return $new_value;
+		
+	}
+	
+	/**
+	 * Get attributes
+	 * @param int $index
+	 * @return string
+	 */
+	protected function getAttributes($index=0) {
+		if (isset($this->Attributes[$index]) && is_array($this->Attributes[$index]) && !empty($this->Attributes[$index])) {
+			$temp = array();
+			foreach ($this->Attributes[$index] AS $key => $value) {
+				$temp[] = $key."=\"".esc_attr($value)."\"";
+			}
+			return implode(" ", $temp);
+		}
+	}
+	
+	/**
+	 * Get style
+	 * @param int $index
+	 * @return string
+	 */
+	protected function getStyle($index=0) {
+		if (isset($this->Style[$index]) && is_array($this->Style[$index]) && !empty($this->Style[$index])) {
+			$temp = array();
+			foreach ($this->Style[$index] AS $key => $value) {
+				$temp[] = $key.": ".$value;
+			}
+			return "style=\"".implode("; ", $temp)."\"";
+		}
 	}
 	
 	/**
@@ -1692,7 +1951,7 @@ class WPSettingsField extends WPSettingsSection {
 	 */
 	private function _sanitizeText($text) {
 		global $wpdb;
-		return $wpdb->escape($text);
+		return esc_sql($text);
 	}
 	
 	/**
@@ -1750,9 +2009,11 @@ class WPSettingsField extends WPSettingsSection {
 				<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
 				<?php
 			}
+			
+			$this->addStyle('width', $width.'px', $index);
 			?>
 			<div style="width: <?php echo $width ?>px; float: left;">
-				<input type="text" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo esc_attr( $this->CurrentValue[$index] ) ?>" <?php if ($this->Placeholder[$index]): ?>placeholder="<?php echo esc_attr($this->Placeholder[$index]) ?>"<?php endif; ?> style="width: <?php echo $width ?>px;">
+				<input type="text" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo esc_attr( $this->CurrentValue[$index] ) ?>" <?php if ($this->Placeholder[$index]): ?>placeholder="<?php echo esc_attr($this->Placeholder[$index]) ?>"<?php endif; ?> <?php echo $this->getStyle($index) ?> <?php echo $this->getAttributes($index) ?>>
 			</div>
 			<div style="clear: both;"></div>
 			<?php
@@ -1776,9 +2037,12 @@ class WPSettingsField extends WPSettingsSection {
 				<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
 				<?php
 			}
+			
+			$this->addStyle('width', $width.'px', $index);
+			$this->addStyle('height', $height.'px', $index);
 			?>
 			<div style="width: <?php echo $width ?>px; float: left;">
-				<textarea name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" style="width: <?php echo $width ?>px; height: <?php  echo $height ?>px;"><?php echo esc_html( $this->CurrentValue[$index] ) ?></textarea>
+				<textarea name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" <?php echo $this->getStyle($index) ?> <?php echo $this->getAttributes($index) ?>><?php echo esc_html( $this->CurrentValue[$index] ) ?></textarea>
 			</div>
 			<div style="clear: both;"></div>
 			<?php
@@ -1824,9 +2088,11 @@ class WPSettingsField extends WPSettingsSection {
 				<div style="width: 150px; float: left; padding-top: 2px;"><em><?php echo esc_html( $this->HelpText[$index] ) ?></em></div>
 				<?php
 			}
+			
+			$this->addStyle('width', $width.'px', $index);
 			?>
 			<div style="width: 150px; float: left;">
-				# <input type="text" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo esc_attr( $this->CurrentValue[$index] ) ?>" <?php if ($this->Placeholder[$index]): ?> placeholder="<?php echo esc_attr($this->Placeholder[$index]) ?>"<?php endif; ?> style="width: <?php echo $width ?>px;">
+				# <input type="text" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo esc_attr( $this->CurrentValue[$index] ) ?>" <?php if ($this->Placeholder[$index]): ?> placeholder="<?php echo esc_attr($this->Placeholder[$index]) ?>"<?php endif; ?> <?php echo $this->getStyle($index) ?> <?php echo $this->getAttributes($index) ?>>
 			</div>
 			<div style="clear: both;"></div>
 			<?php
@@ -1861,7 +2127,7 @@ class WPSettingsField extends WPSettingsSection {
 				});
 				</script>
 				<input type="hidden" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="<?php echo ($this->CurrentValue[$index] ? "1":"0") ?>" >
-				<input type="checkbox" name="cb_<?php echo esc_attr( $this->InputName[$index] ) ?>" id="cb_<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> >
+				<input type="checkbox" name="cb_<?php echo esc_attr( $this->InputName[$index] ) ?>" id="cb_<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" value="1" <?php checked($this->CurrentValue[$index], 1) ?> <?php echo $this->getStyle($index) ?> <?php echo $this->getAttributes($index) ?>>
 			</div>
 			<div style="clear: both;"></div>
 			<?php
@@ -1887,7 +2153,7 @@ class WPSettingsField extends WPSettingsSection {
 			}
 			?>
 			<div style="float: left;">
-				<select name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>">
+				<select name="<?php echo esc_attr( $this->InputName[$index] ) ?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index ) ?>" <?php echo $this->getStyle($index) ?> <?php echo $this->getAttributes($index) ?>>
 					<?php
 					// Loop options through option groups
 					if ($this->OptionGroups) {
@@ -1966,7 +2232,8 @@ class WPSettingsField extends WPSettingsSection {
 				foreach ($this->Options AS $option_index => $option) {
 					?>
 					<p>
-						<input type="radio" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" value="<?php echo esc_attr( $option->Value )?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>" <?php checked($this->CurrentValue[$index], $option->Value) ?>> <label for="<?php echo esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>"><?php echo esc_attr( $option->Name ) ?></label>
+						<input type="radio" name="<?php echo esc_attr( $this->InputName[$index] ) ?>" value="<?php echo esc_attr( $option->Value )?>" id="<?php echo esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>" <?php checked($this->CurrentValue[$index], $option->Value) ?> <?php echo $this->getStyle($index) ?> <?php echo $this->getAttributes($index) ?>> 
+						<label for="<?php echo esc_attr( $this->FieldId .'_'.$index.'_'.$option_index ) ?>"><?php echo esc_attr( $option->Name ) ?></label>
 					</p>
 					<?php
 				}

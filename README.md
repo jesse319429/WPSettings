@@ -236,20 +236,74 @@ Output sections can be used to output custom HTML in the end of a settings page.
 		<?php
 	}
 
+### Adding custom style and attributes:
+You can set custom style and attribute using $field->setAttribute() and $field->setStyle(). The value you set should be an array of associative arrays. Even if you only have one don't add multiple fields in one go as in the example below.
+It can also be done one attribute or style at a time using $field->addAttribute() or $field->addStyle() where the first two parameters are the attribute/style name and value and the third parameter is the index for which field to set it to. 
+Attributes can also be set directly into $section->addField() as the 9th parameter and styles as the 10th.
+
+	use \FeedMeAStrayCat\WPSettings_1_9_0\WPSettingsPage;
+	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_9_0\WPSettings')) {
+		require_once('/path/to/wpsettings.php');
+	}
+	
+	add_action('admin_menu', 'my_admin_menu');
+	
+	// This will contain the global WPSettingsPage object
+	global $wp_settings_page;
+	$wp_settings_page = null;
+	
+	function my_admin_menu() {
+		global $wp_settings_page;
+		
+		// Create a settings page
+		$wp_settings_page = new WPSettingsPage('My page title', 'Subtitle', 'My menu title', 'manage_options', 'my_unique_slug', 'my_admin_page_output', 'icon-url.png', $position=100);
+		
+		// Adds a config section
+		$section = $wp_settings_page->addSettingsSection('first_section', 'The first section', 'This is the first section');
+		
+		// Adds a text input
+		$field = $section->addField('test_value', 'Test', 'text', array('my_options[test]', 'my_options[test2]'));
+		$field->setAttributes(array(array('readonly' => 'readonly'), array('maxlength' => 10));
+		$field->setStyle(array(array('wifth' => '200px'), array('width' => '300px'));
+	
+		// Can also be done like this:
+		$field = $section->addField('test_value2', 'Test 2', 'text', array('my_options[test3]', 'my_options[test4]'));
+		$field->addAttribute('readonly', 'readonly', 0);
+		$field->addAttribute('maxlength', '10', 1);
+		$field->addStyle('width', '200px', 0);
+		$field->addStyle('width', '300px', 1);
+		
+		// Or for only one value
+		$field = $section->addField('test_value3', 'Test ', 'text', 'my_options[test5]');
+		$field->addAttribute('readonly', 'readonly');
+		$field->addAttribute('maxlength', '10');
+		$field->addStyle('width', '200px');
+		$field->addStyle('border', '1px solid red');
+		
+		// Activate settings
+		$wp_settings_page->activateSettings();
+	}
+	
+	function my_admin_page_output() {
+		global $wp_settings_page;
+		
+		$wp_settings_page->output();
+	}
+
 
 Field types
 -----------
 
 These are the types that can be used in addField() (the third parameter)
 	
-* "text" - A standard text input type. Sanitized with $wpdb->escape()
-* "textarea" - A textarea input type. Sanitized with $wpdb->escape(). Set size with $field->setSize(int $width, int $height)
+* "text" - A standard text input type. Sanitized with esc_sql()
+* "textarea" - A textarea input type. Sanitized with esc_sql(). Set size with $field->setSize(int $width, int $height)
 * "wysiwyg" - A What You See Is What You Get editor using the built in wp_editor() function. Set settings args with $field->setSettings()
 * "url" - A URL text. Sanitized with esc_url()
 * "int" - A integer. Sanitized with (int)
 * "checkbox" - A checkbox, sanitizes to save 1 or 0
-* "dropdown" - A select type dropdown. Sanitizes with standard $wpdb->escape()
-* "radio" - A set of radio options. Sanitizes with the standard $wpdb->escape()
+* "dropdown" - A select type dropdown. Sanitizes with standard esc_sql()
+* "radio" - A set of radio options. Sanitizes with the standard esc_sql()
 * "hex_color" - A HTML hex color value. Sanitize with allowed hex valued colors.
 
 
@@ -285,6 +339,16 @@ Note that using $page->addSubPage() on any other page then the stand alone WPSet
 an exception.
 
 
+Network admin
+-------------
+
+From version 1.9.0 there should be no issues creating a network admin settings page. Settings are stored using 
+update_site_option() and must therefor be fetched using get_site_option() instead of get_option().
+
+http://codex.wordpress.org/Function_Reference/update_site_option
+http://codex.wordpress.org/Function_Reference/get_site_option
+
+
 Filters
 -------
 	
@@ -304,7 +368,7 @@ These are the custom actions that are thrown by WPSettings which can be used to 
 	
 * wps_before_update
  * Parameters: 0
- * Called after validation. Before update.
+ * Called after validation. Before update. Note that this action is triggered once for each field.
 
 
 Requirements
@@ -325,6 +389,18 @@ Todos
 Important notes
 ---------------
 
+### 1.9.0 - 2013-11-06
+I've noticed that the wps_before_update action was only activated when input names existed, and when it was an 
+array, because the action was just triggered from WPSettingsPage->sanitize().
+The action has been moved to WPSettingsField->sanitize() so it will get triggered on regular input names as well.
+This means that it will be triggered once for each added input.
+		
+I've also noticed that there is no way to only use output settings and store stuff using the regular WPSettings
+form. You have to do a output setting that contains the form it self. Or just add some setting through WPSetting
+and the specials through a output section.
+
+WPSettings can now also create network admin pages. Fields are stored using update_site_option().
+
 ### 1.7.0 - 2013-01-01
 In WordPress 3.5 it seams like a change was made on ajax calls where the admin_menu action isn't triggered which 
 would cause problems with media upload if you follow the old examples using admin_menu to setup the WPSettingsPage
@@ -339,8 +415,26 @@ The examples have been updated to reflect this in 1.7.0.
 Version history
 ---------------
 
+	VERSION HISTORY
+	
+* 1.9.0
+ * Changes to wps_before_update action, will now trigger once on each added field
+ * Settings pages are now also functional on network admin pages
+ * Added action to correctly enqueue jquery on admin pages
+ * Replaced deprecated $wpdb->escape() with esc_sql()
+ * Added $field->setCurrentValue()
+ * Added $field->setHelpText()
+ * Added $field->setPlaceholder()
+ * Added $field->setDescription()
+ * Added $field->setAttributes()
+ * Added $field->addAttribute()
+ * Added $field->setStyle()
+ * Added $field->addStyle()
+ * Input fields (not checkbox, radio buttons or the wysiwyg) can have added attributes and custom style
 * 1.8.1
- * Removed one instance of call-time pass-by-reference
+ * Removed &$this pass by reference (deprecated)
+ * Bugfix. Couldn't use only output sections.
+ * Only output form if there are any settings sections.
 * 1.8.0
  * Added the possibility to create subpages to the available sections using the objects WPSettingsThemePage, WPSettingsDashboardPage, WPSettingsPostsPage, WPSettingsMediaPage, WPSettingsLinksPage, WPSettingsPagesPage, WPSettingsCommentsPage, WPSettingsPluginsPage, WPSettingsUsersPage, WPSettingsManagementPage and WPSettingsOptionsPage.
 * 1.7.0
