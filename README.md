@@ -414,8 +414,6 @@ The examples have been updated to reflect this in 1.7.0.
 		
 Version history
 ---------------
-
-	VERSION HISTORY
 	
 * 1.9.0
  * Changes to wps_before_update action, will now trigger once on each added field
