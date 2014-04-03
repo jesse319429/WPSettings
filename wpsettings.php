@@ -329,7 +329,7 @@ namespace FeedMeAStrayCat\WPSettings_1_9_1;
 	These are the types that can be used in addField() (the third parameter)
 	
 	"text"
-	A standard text input type. Unsanitized.
+		A standard text input type. Unsanitized.
 	"textarea"
 		A textarea input type. Unsanitized. Set size with $field->setSize(int $width, int $height)
 	"wysiwyg"
