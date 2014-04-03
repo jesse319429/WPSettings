@@ -2,7 +2,7 @@
 /**
  * WP Settings - A set of classes to create a WordPress settings page for a Theme or a plugin.
  * @author David M&aring;rtensson <david.martensson@gmail.com>
- * @version 1.9.0
+ * @version 1.9.1
  * @package FeedMeAStrayCat
  * @subpackage WPSettings
  * @license MIT http://en.wikipedia.org/wiki/MIT_License
@@ -10,7 +10,7 @@
 
 
 // Set namespace
-namespace FeedMeAStrayCat\WPSettings_1_9_0;
+namespace FeedMeAStrayCat\WPSettings_1_9_1;
 
 
 /*************************************
@@ -272,8 +272,8 @@ namespace FeedMeAStrayCat\WPSettings_1_9_0;
 	parameters are the attribute/style name and value and the third parameter is the index for which field to set it to. 
 	Attributes can also be set directly into $section->addField() as the 9th parameter and styles as the 10th.
 	----------------------------------
-	use \FeedMeAStrayCat\WPSettings_1_9_0\WPSettingsPage;
-	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_9_0\WPSettings')) {
+	use \FeedMeAStrayCat\WPSettings_1_9_1\WPSettingsPage;
+	if (!class_exists('\FeedMeAStrayCat\WPSettings_1_9_1\WPSettings')) {
 		require_once('/path/to/wpsettings.php');
 	}
 	
@@ -329,11 +329,11 @@ namespace FeedMeAStrayCat\WPSettings_1_9_0;
 	These are the types that can be used in addField() (the third parameter)
 	
 	"text"
-	A standard text input type. Sanitized with esc_sql()
+	A standard text input type. Unsanitized.
 	"textarea"
-		A textarea input type. Sanitized with esc_sql(). Set size with $field->setSize(int $width, int $height)
+		A textarea input type. Unsanitized. Set size with $field->setSize(int $width, int $height)
 	"wysiwyg"
-		A What You See Is What You Get editor using the built in wp_editor() function. Set settings args with $field->setSettings()
+		A What You See Is What You Get editor using the built in wp_editor() function. Unsanitized. Set settings args with $field->setSettings()
 	"url"
 		A URL text. Sanitized with esc_url()
 	"int"
@@ -341,9 +341,9 @@ namespace FeedMeAStrayCat\WPSettings_1_9_0;
 	"checkbox"
 		A checkbox, sanitizes to save 1 or 0
 	"dropdown"
-		A select type dropdown. Sanitizes with standard esc_sql()
+		A select type dropdown. Unsanitized.
 	"radio"
-		A set of radio options. Sanitizes with the standard esc_sql()
+		A set of radio options. Unsanitized.
 	"hex_color"
 		A HTML hex color value. Sanitize with allowed hex valued colors.
 		
@@ -466,6 +466,9 @@ namespace FeedMeAStrayCat\WPSettings_1_9_0;
 	
 	VERSION HISTORY
 	
+	1.9.1
+		Fixed dropdown to work with multiple attribute set (uses in_array() to test value instead of string == compare)
+		Removed esc_sql() sanitization. Both update_option() and update_site_option() expect unsanitized data and esc_sql() can cause issues.
 	1.9.0
 		Changes to wps_before_update action, will now trigger once on each added field
 		Settings pages are now also functional on network admin pages
@@ -614,9 +617,9 @@ namespace FeedMeAStrayCat\WPSettings_1_9_0;
 
 
 // Add action to enqueue jQuery
-add_action('admin_enqueue_scripts', array('\FeedMeAStrayCat\WPSettings_1_9_0\WPSettingsPage', 'admin_enqueue_scripts'));
+add_action('admin_enqueue_scripts', array('\FeedMeAStrayCat\WPSettings_1_9_1\WPSettingsPage', 'admin_enqueue_scripts'));
 // Add action for Network Admin page edits
-add_action('network_admin_edit_wps', array('\FeedMeAStrayCat\WPSettings_1_9_0\WPSettingsPage', 'network_admin_edit'));
+add_action('network_admin_edit_wps', array('\FeedMeAStrayCat\WPSettings_1_9_1\WPSettingsPage', 'network_admin_edit'));
 
 
 	
@@ -626,7 +629,7 @@ add_action('network_admin_edit_wps', array('\FeedMeAStrayCat\WPSettings_1_9_0\WP
 class WPSettings {
 	
 	// Version constant
-	const VERSION = "1.9.0";
+	const VERSION = "1.9.1";
 	
 	
 	/**
@@ -811,7 +814,7 @@ class WPSettingsPage extends WPSettings {
 						// with sanitize on the $field object 
 						else {
 							$registered_input_names[] = $input_name;
-							register_setting($page->Id, $input_name, array($field, 'sanitize'));
+							register_setting($page->Id, $input_name);
 						}
 					}
 				}
@@ -1951,7 +1954,7 @@ class WPSettingsField extends WPSettingsSection {
 	 */
 	private function _sanitizeText($text) {
 		global $wpdb;
-		return esc_sql($text);
+		return $text;
 	}
 	
 	/**
@@ -2206,8 +2209,15 @@ class WPSettingsField extends WPSettingsSection {
 			if ($optgroup === false && !is_null($option->OptionGroup)) {
 				continue;
 			}
+			// Current value is an array, prob multisilect, do in_array check
+			if (is_array($this->CurrentValue[$field_index])) {
+				$checked = (in_array($option->Value, $this->CurrentValue[$field_index]) ? true:false);
+			}
+			else {
+				$checked = ($option->Value == $this->CurrentValue[$field_index] ? true:false);
+			}
 			?>
-			<option value="<?php echo esc_attr( $option->Value )?>" id="<?php echo esc_attr( $this->FieldId .'_'.$field_index.'_'.$option_index ) ?>" <?php selected($this->CurrentValue[$field_index], $option->Value) ?>><?php echo esc_attr( $option->Name ) ?></option>
+			<option value="<?php echo esc_attr( $option->Value )?>" id="<?php echo esc_attr( $this->FieldId .'_'.$field_index.'_'.$option_index ) ?>" <?php selected($checked, true) ?>><?php echo esc_attr( $option->Name ) ?></option>
 			<?php
 		}
 	}
